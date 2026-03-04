@@ -1,53 +1,117 @@
-# Plugin.Maui.Rive Template
+# Plugin.Maui.Rive
 
-The `Plugin.Maui.Rive` repository is a template repository that can be used to bootstrap your own .NET MAUI plugin project. You can use this project structure as a blueprint for your own work.
+[![NuGet](https://img.shields.io/nuget/v/Plugin.Maui.Rive.svg)](https://www.nuget.org/packages/Plugin.Maui.Rive)
 
-Learn how to get started with your plugin in this [YouTube video](https://www.youtube.com/watch?v=ZCQrlGT7MhI&list=PLfbOp004UaYVgzmTBNVI0ql2qF0LhSEU1&index=27).
+[Rive](https://rive.app/) animation runtime bindings for .NET MAUI. Display and control interactive Rive animations in your cross-platform .NET MAUI applications.
 
-This template contains:
+## Supported Platforms
 
-- A [sample .NET MAUI app](samples) where you can demonstrate how your plugin works and test your plugin with while developing
-- The [source](src) of the plugin
-- A boilerplate [README file](README_Rive.md) you can use (don't forget to rename to `README.md` and remove this one!)
-- [GitHub Actions for CI](.github/workflows) of the library and the sample app
-- [GitHub Action for releasing](.github/workflows) your package to NuGet
-- A [generic icon](nuget.png) for your project, feel free to adapt and be creative!
-- The [LICENSE](LICENSE) file with the MIT license. If you want this to be different, please change it. At the very least add your name in there!
+| Platform | Status |
+|----------|--------|
+| iOS 14+  | ✅ Working |
+| Android 21+ | ✅ Working |
 
 ## Getting Started
 
-1. Create your own GitHub repository from this one by clicking the "Use this template" button and then "Create a new repository". More information in the [documentation](https://docs.github.com/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template). After that, clone the repo to your local machine.
+### 1. Download Native Dependencies
 
-2. Replace all occurrences of `Plugin.Maui.Rive` with whatever your feature or functionality will be. For instance: `Plugin.Maui.ScreenBrightness` or `Plugin.Maui.Audio`. Of course the name can be anything, but to make it more discoverable it could be a great choice to stick to this naming scheme. You can easily do this with your favorite text-editor and do a replace all on all files.
+The native Rive SDKs are too large for git. Run the download script first:
 
-   2.1 Don't forget to also rename the files and folders on your filesystem.
+```bash
+./download-native-deps.sh
+```
 
-3. In the csproj file of the plugin project (under `src`), make sure that you replace all relevant values to your project. This means the author of this project, the description of the project, the target framework (.NET 7, 8 or something else). If you don't want to or can't support a certain platform, remove that target platform altogether.
+This downloads:
+- **iOS**: `RiveRuntime.xcframework` v6.15.2 (~90MB)
+- **Android**: `rive-android` v11.2.1 AAR (~10MB)
 
-4. Delete this `README.md` file and rename `README_Rive.md` to `README.md`. Fill that README file with all the relevant details of your project.
+### 2. Register Rive in MauiProgram.cs
 
-5. Check the LICENSE file if this reflects the license that you want to distribute your project under. At the very least add your name there and the current year we live in.
+```csharp
+using Plugin.Maui.Rive;
 
-6. Create a nice icon in the `nuget.png` file that will show up on nuget.org and in the NuGet manager in Visual Studio.
+public static MauiApp CreateMauiApp()
+{
+    var builder = MauiApp.CreateBuilder();
+    builder
+        .UseMauiApp<App>()
+        .UseRive();  // Register Rive handler
 
-7. Write your plugin code (under `src`) and add samples to the .NET MAUI sample app (under `samples` folder)
+    return builder.Build();
+}
+```
 
-8. Make super sure that your package won't show up as `Plugin.Maui.Rive` on NuGet! If one does, you owe me a drink!
+### 3. Add a .riv File
 
-9. Publish your package to NuGet, a nice guide to do that can be found [here](https://learn.microsoft.com/nuget/nuget-org/publish-a-package). Also see [Publish to NuGet](#publish-to-nuget) below.
+Place your `.riv` file in `Resources/Raw/` (e.g., `Resources/Raw/animation.riv`).
 
-10. Enjoy life as a .NET MAUI plugin author! ✨
+### 4. Use RiveAnimationView in XAML
 
-As an example of all of this you can have a look at:
+```xml
+<ContentPage xmlns:rive="clr-namespace:Plugin.Maui.Rive;assembly=Plugin.Maui.Rive">
 
-- [Plugin.Maui.Audio](https://github.com/jfversluis/Plugin.Maui.Audio)
-- [Plugin.Maui.Pedometer](https://github.com/jfversluis/Plugin.Maui.Pedometer)
-- [Plugin.Maui.ScreenBrightness](https://github.com/jfversluis/Plugin.Maui.ScreenBrightness)
+    <rive:RiveAnimationView
+        ResourceName="animation"
+        AutoPlay="True"
+        Fit="Contain"
+        HeightRequest="400" />
 
-## Publish to NuGet
+</ContentPage>
+```
 
-If you want to publish your package to NuGet, you totally can! Included in this template are a couple of GitHub Actions. One of them goes of when you create a new tag with this pattern: `v1.0.0` or `v1.0.0-preview1`. Obviously the `1.0.0` part can be determined by you as you see fit, as long as you follow the pattern of 3 integers separated by dots.
+## API Reference
 
-You will also want to set a secret for this repository which contains your NuGet API key. Follow the documentation on that [here](https://docs.github.com/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository), and add a secret with the key `NUGET_API_KEY` and value of your NuGet API key. The API key should be authorized to push a NuGet package with the given identifier. 
+### RiveAnimationView Properties
 
-From there, after [creating a GitHub release](https://docs.github.com/repositories/releasing-projects-on-github/managing-releases-in-a-repository) your plugin will be automatically released on NuGet!
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `ResourceName` | `string?` | `null` | Name of the .riv file (without extension) in Resources/Raw |
+| `AutoPlay` | `bool` | `true` | Whether the animation plays automatically |
+| `Fit` | `RiveFitMode` | `Contain` | How the animation fits within the view |
+| `RiveAlignment` | `RiveAlignmentMode` | `Center` | Alignment of the animation within the view |
+| `ArtboardName` | `string?` | `null` | Specific artboard name (default artboard if null) |
+| `StateMachineName` | `string?` | `null` | State machine to use |
+| `AnimationName` | `string?` | `null` | Specific animation name |
+
+### RiveAnimationView Methods
+
+```csharp
+riveView.Play();       // Start/resume playback
+riveView.Pause();      // Pause playback
+riveView.Stop();       // Stop playback
+riveView.Reset();      // Reset to initial state
+
+// State machine inputs
+riveView.FireTrigger("triggerName");
+riveView.SetBoolInput("inputName", true);
+riveView.SetNumberInput("inputName", 42.0);
+```
+
+### Enums
+
+**RiveFitMode**: `Fill`, `Contain`, `Cover`, `FitWidth`, `FitHeight`, `ScaleDown`, `NoFit`, `Layout`
+
+**RiveAlignmentMode**: `TopLeft`, `TopCenter`, `TopRight`, `CenterLeft`, `Center`, `CenterRight`, `BottomLeft`, `BottomCenter`, `BottomRight`
+
+## Building from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/jfversluis/Plugin.Maui.Rive.git
+cd Plugin.Maui.Rive
+
+# Download native dependencies
+./download-native-deps.sh
+
+# Build
+dotnet build src/Plugin.Maui.Rive/Plugin.Maui.Rive.csproj
+```
+
+## Native SDK Versions
+
+- **iOS**: [RiveRuntime](https://github.com/rive-app/rive-ios) v6.15.2
+- **Android**: [rive-android](https://github.com/rive-app/rive-android) v11.2.1
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
