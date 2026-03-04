@@ -8,7 +8,7 @@
     <Grid RowDefinitions="*, Auto" Padding="20">
         <rive:RiveAnimationView 
             x:Name="riveView"
-            ResourceName="bear"
+            ResourceName="vehicles"
             AutoPlay="True"
             Fit="Contain"
             HeightRequest="400"

@@ -8,6 +8,7 @@ namespace Plugin.Maui.Rive;
 public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, global::Android.Views.View>
 {
     private global::App.Rive.Runtime.Kotlin.RiveAnimationView? _riveView;
+    private bool _contentLoaded;
 
     private static bool _riveInitialized;
 
@@ -17,7 +18,6 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         
         try
         {
-            // Call Rive.init(context) via JNI since the RendererType binding has issues
             var riveClass = Java.Lang.Class.ForName("app.rive.runtime.kotlin.core.Rive");
             var instanceField = riveClass.GetField("INSTANCE");
             var riveInstance = instanceField.Get(null)!;
@@ -32,11 +32,10 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             initMethod.Invoke(riveInstance, context, riveRenderer);
             
             _riveInitialized = true;
-            global::Android.Util.Log.Info("Plugin.Maui.Rive", "Rive initialized successfully");
         }
         catch (Exception ex)
         {
-            global::Android.Util.Log.Error("Plugin.Maui.Rive", $"Rive init failed: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Rive init failed: {ex}");
         }
     }
 
@@ -50,7 +49,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     protected override void ConnectHandler(global::Android.Views.View platformView)
     {
         base.ConnectHandler(platformView);
-        if (_riveView != null) LoadRiveContent(_riveView);
+        if (_riveView != null && !_contentLoaded) LoadRiveContent(_riveView);
     }
 
     protected override void DisconnectHandler(global::Android.Views.View platformView)
@@ -74,31 +73,21 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
                 var resId = Context.Resources?.GetIdentifier(
                     virtualView.ResourceName, "raw", Context.PackageName) ?? 0;
 
-                global::Android.Util.Log.Info("Plugin.Maui.Rive", $"Resource '{virtualView.ResourceName}' raw resId={resId}");
-
                 if (resId != 0)
                 {
-                    riveView.SetRiveResource(
-                        resId,
-                        virtualView.ArtboardName,
-                        virtualView.AnimationName,
-                        virtualView.StateMachineName,
-                        virtualView.AutoPlay,
-                        false,
-                        fit,
-                        alignment,
-                        loop);
-                    global::Android.Util.Log.Info("Plugin.Maui.Rive", "SetRiveResource done");
+                    riveView.SetRiveResource(resId, virtualView.ArtboardName, virtualView.AnimationName,
+                        virtualView.StateMachineName, virtualView.AutoPlay, false, fit, alignment, loop);
                 }
                 else
                 {
                     LoadFromAssets(riveView, virtualView, fit, alignment, loop);
                 }
+                _contentLoaded = true;
             }
         }
         catch (Exception ex)
         {
-            global::Android.Util.Log.Error("Plugin.Maui.Rive", $"LoadRiveContent error: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Error: {ex}");
         }
     }
 
@@ -108,34 +97,19 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         try
         {
             var fileName = virtualView.ResourceName + ".riv";
-            global::Android.Util.Log.Info("Plugin.Maui.Rive", $"Loading from assets: {fileName}");
             using var stream = Context.Assets?.Open(fileName);
-            if (stream == null)
-            {
-                global::Android.Util.Log.Error("Plugin.Maui.Rive", $"Asset not found: {fileName}");
-                return;
-            }
+            if (stream == null) return;
 
             using var ms = new System.IO.MemoryStream();
             stream.CopyTo(ms);
             var bytes = ms.ToArray();
-            global::Android.Util.Log.Info("Plugin.Maui.Rive", $"Loaded {bytes.Length} bytes from {fileName}");
 
-            riveView.SetRiveBytes(
-                bytes,
-                virtualView.ArtboardName,
-                virtualView.AnimationName,
-                virtualView.StateMachineName,
-                virtualView.AutoPlay,
-                false,
-                fit,
-                alignment,
-                loop);
-            global::Android.Util.Log.Info("Plugin.Maui.Rive", "SetRiveBytes done");
+            riveView.SetRiveBytes(bytes, virtualView.ArtboardName, virtualView.AnimationName,
+                virtualView.StateMachineName, virtualView.AutoPlay, false, fit, alignment, loop);
         }
         catch (Exception ex)
         {
-            global::Android.Util.Log.Error("Plugin.Maui.Rive", $"Error loading from assets: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Error loading from assets: {ex}");
         }
     }
 
