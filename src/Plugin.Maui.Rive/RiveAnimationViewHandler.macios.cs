@@ -127,10 +127,87 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     public partial string? GetTextRunValueAtPath(string textRunName, string path)
     {
-        // iOS SDK doesn't have a path variant on RiveViewModel directly;
-        // fall back to artboard-level access if available
         return _viewModel?.GetTextRunValue(textRunName);
     }
+
+    // --- Introspection ---
+
+    public partial string[] GetArtboardNames()
+    {
+        try { return _viewModel?.ArtboardNames ?? []; }
+        catch { return []; }
+    }
+
+    public partial string[] GetAnimationNames()
+    {
+        try
+        {
+            // Access artboard via the RiveModel -> RiveFile -> Artboard chain
+            var riveModel = _viewModel?.RiveModel;
+            if (riveModel == null) return [];
+
+            var riveFileSel = Selector.GetHandle("riveFile");
+            if (!riveModel.RespondsToSelector(new Selector("riveFile"))) return [];
+
+            var fileHandle = IntPtr_objc_msgSend(riveModel.Handle, riveFileSel);
+            if (fileHandle == IntPtr.Zero) return [];
+
+            var riveFile = ObjCRuntime.Runtime.GetNSObject<RiveFile>(fileHandle);
+            if (riveFile == null) return [];
+
+            var artboard = riveFile.GetArtboard(out _);
+            return artboard?.AnimationNames ?? [];
+        }
+        catch { return []; }
+    }
+
+    public partial string[] GetStateMachineNames()
+    {
+        try
+        {
+            var riveModel = _viewModel?.RiveModel;
+            if (riveModel == null) return [];
+
+            var riveFileSel = Selector.GetHandle("riveFile");
+            if (!riveModel.RespondsToSelector(new Selector("riveFile"))) return [];
+
+            var fileHandle = IntPtr_objc_msgSend(riveModel.Handle, riveFileSel);
+            if (fileHandle == IntPtr.Zero) return [];
+
+            var riveFile = ObjCRuntime.Runtime.GetNSObject<RiveFile>(fileHandle);
+            if (riveFile == null) return [];
+
+            var artboard = riveFile.GetArtboard(out _);
+            return artboard?.StateMachineNames ?? [];
+        }
+        catch { return []; }
+    }
+
+    public partial string[] GetStateMachineInputNames()
+    {
+        try
+        {
+            var riveModel = _viewModel?.RiveModel;
+            if (riveModel == null) return [];
+
+            var riveFileSel = Selector.GetHandle("riveFile");
+            if (!riveModel.RespondsToSelector(new Selector("riveFile"))) return [];
+
+            var fileHandle = IntPtr_objc_msgSend(riveModel.Handle, riveFileSel);
+            if (fileHandle == IntPtr.Zero) return [];
+
+            var riveFile = ObjCRuntime.Runtime.GetNSObject<RiveFile>(fileHandle);
+            if (riveFile == null) return [];
+
+            var artboard = riveFile.GetArtboard(out _);
+            var sm = artboard?.DefaultStateMachine;
+            return sm?.InputNames ?? [];
+        }
+        catch { return []; }
+    }
+
+    [System.Runtime.InteropServices.DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    static extern IntPtr IntPtr_objc_msgSend(IntPtr receiver, IntPtr selector);
 
     // --- Mapping helpers ---
 
@@ -261,6 +338,11 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             handler._viewModel.Alignment = MapAlignmentToNative(view.RiveAlignment);
     }
 
+    public static void MapLayoutScaleFactor(RiveAnimationViewHandler handler, IRiveAnimationView view)
+    {
+        // iOS RiveViewModel does not expose layoutScaleFactor directly; no-op on iOS
+    }
+
     // --- Command Mappers ---
 
     public static void MapPlay(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
@@ -346,6 +428,34 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] SetTextRunAtPath: {ex.Message}"); }
         }
     }
+
+    public static void MapSetRiveBytes(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
+    {
+        if (args is RiveBytesArgs bytesArgs)
+        {
+            try
+            {
+                var data = NSData.FromArray(bytesArgs.Bytes);
+                var riveFile = new RiveFile(data, true, out var error);
+                if (error != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] SetRiveBytes error: {error}");
+                    return;
+                }
+
+                // Reconfigure the view model with the new file's artboard
+                handler._viewModel?.ConfigureModel(
+                    bytesArgs.ArtboardName,
+                    bytesArgs.StateMachineName,
+                    bytesArgs.AnimationName,
+                    out _);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] SetRiveBytes: {ex.Message}");
+            }
+        }
+    }
 }
 
 // --- Delegate Proxies ---
@@ -390,6 +500,15 @@ internal class RiveStateMachineDelegateProxy : RiveStateMachineDelegate
         catch { /* best effort */ }
 
         handler.VirtualView?.OnRiveEventReceived(new RiveEventReceivedEventArgs(name, delay, props));
+    }
+
+    [Export("stateMachine:didChangeState:")]
+    public void DidChangeState(NSObject stateMachine, NSString stateName)
+    {
+        if (!_handlerRef.TryGetTarget(out var handler)) return;
+
+        var smName = stateMachine.ValueForKey(new NSString("name"))?.ToString() ?? "";
+        handler.VirtualView?.OnStateChanged(new RiveStateChangedEventArgs(smName, stateName.ToString()));
     }
 }
 

@@ -74,6 +74,7 @@ Place your `.riv` file in `Resources/Raw/` (e.g., `Resources/Raw/animation.riv`)
 | `StateMachineName` | `string?` | `null` | State machine to use |
 | `AnimationName` | `string?` | `null` | Specific animation name |
 | `IsPlaying` | `bool` | `false` | Whether the animation is currently playing (updated automatically) |
+| `LayoutScaleFactor` | `float` | `1.0` | Scale factor for Fit.Layout mode (Android only) |
 
 ### RiveAnimationView Methods
 
@@ -102,6 +103,16 @@ string? text = riveView.GetTextRunValue("textRunName");
 riveView.SetTextRunValue("textRunName", "new value");
 string? nestedText = riveView.GetTextRunValueAtPath("textRunName", "path");
 riveView.SetTextRunValueAtPath("textRunName", "new value", "path");
+
+// Load from byte array
+byte[] riveBytes = File.ReadAllBytes("animation.riv");
+riveView.SetRiveBytes(riveBytes, artboardName: "MyArtboard");
+
+// Introspection (iOS: full support, Android: artboard name only)
+string[] artboards = riveView.GetArtboardNames();
+string[] animations = riveView.GetAnimationNames();
+string[] stateMachines = riveView.GetStateMachineNames();
+string[] inputs = riveView.GetStateMachineInputNames();
 ```
 
 ### Events
@@ -117,6 +128,8 @@ riveView.RiveEventReceived += (s, e) =>
     foreach (var prop in e.Properties)
         Console.WriteLine($"  {prop.Key} = {prop.Value}");
 };
+riveView.StateChanged += (s, e) =>
+    Console.WriteLine($"State changed: {e.StateMachineName} -> {e.StateName}");
 ```
 
 ### Enums

@@ -67,8 +67,35 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     public partial string? GetTextRunValueAtPath(string textRunName, string path)
     {
-        try { return _riveView?.GetTextRunValue(textRunName); }
+        try { return _riveView?.GetTextRunValue(textRunName, path); }
         catch { return null; }
+    }
+
+    // --- Introspection ---
+
+    public partial string[] GetArtboardNames()
+    {
+        // Android RiveAnimationView only exposes the current ArtboardName, not all names
+        var name = _riveView?.ArtboardName;
+        return name != null ? [name] : [];
+    }
+
+    public partial string[] GetAnimationNames()
+    {
+        // Not directly exposed through Android binding
+        return [];
+    }
+
+    public partial string[] GetStateMachineNames()
+    {
+        // Not directly exposed through Android binding
+        return [];
+    }
+
+    public partial string[] GetStateMachineInputNames()
+    {
+        // Not directly exposed through Android binding
+        return [];
     }
 
     // --- Content Loading ---
@@ -241,6 +268,12 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             handler._riveView.Alignment = alignment;
     }
 
+    public static void MapLayoutScaleFactor(RiveAnimationViewHandler handler, IRiveAnimationView view)
+    {
+        if (handler._riveView != null)
+            handler._riveView.LayoutScaleFactor = new Java.Lang.Float(view.LayoutScaleFactor);
+    }
+
     // --- Command Mappers ---
 
     public static void MapPlay(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
@@ -302,20 +335,20 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     public static void MapFireTriggerAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        if (args is RiveTriggerAtPath input && view.StateMachineName is string smName)
-            handler._riveView?.FireState(smName, input.InputName);
+        if (args is RiveTriggerAtPath input)
+            handler._riveView?.FireStateAtPath(input.InputName, input.Path);
     }
 
     public static void MapSetBoolInputAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        if (args is RiveBoolInputAtPath input && view.StateMachineName is string smName)
-            handler._riveView?.SetBooleanState(smName, input.InputName, input.Value);
+        if (args is RiveBoolInputAtPath input)
+            handler._riveView?.SetBooleanStateAtPath(input.InputName, input.Value, input.Path);
     }
 
     public static void MapSetNumberInputAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        if (args is RiveNumberInputAtPath input && view.StateMachineName is string smName)
-            handler._riveView?.SetNumberState(smName, input.InputName, input.Value);
+        if (args is RiveNumberInputAtPath input)
+            handler._riveView?.SetNumberStateAtPath(input.InputName, input.Value, input.Path);
     }
 
     public static void MapSetTextRunValue(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
@@ -329,10 +362,29 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     public static void MapSetTextRunValueAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        if (args is RiveTextRun textRun)
+        if (args is RiveTextRun textRun && textRun.Path is string path)
         {
-            try { handler._riveView?.SetTextRunValue(textRun.TextRunName, textRun.TextValue); }
+            try { handler._riveView?.SetTextRunValue(textRun.TextRunName, textRun.TextValue, path); }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] SetTextRunAtPath: {ex.Message}"); }
+        }
+    }
+
+    public static void MapSetRiveBytes(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
+    {
+        if (args is RiveBytesArgs bytesArgs && handler._riveView != null)
+        {
+            try
+            {
+                var fit = MapFitToNative(view.Fit);
+                var alignment = MapAlignmentToNative(view.RiveAlignment);
+                handler._riveView.SetRiveBytes(bytesArgs.Bytes, bytesArgs.ArtboardName, bytesArgs.AnimationName,
+                    bytesArgs.StateMachineName, view.AutoPlay, false, fit, alignment, Loop.Auto);
+                handler._contentLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] SetRiveBytes: {ex.Message}");
+            }
         }
     }
 }

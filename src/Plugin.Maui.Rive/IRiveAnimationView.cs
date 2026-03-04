@@ -14,6 +14,7 @@ public interface IRiveAnimationView : IView
     RiveFitMode Fit { get; }
     RiveAlignmentMode RiveAlignment { get; }
     bool IsPlaying { get; set; }
+    float LayoutScaleFactor { get; }
 
     /// <summary>Raised when a Rive event is fired from the state machine.</summary>
     event EventHandler<RiveEventReceivedEventArgs>? RiveEventReceived;
@@ -30,9 +31,13 @@ public interface IRiveAnimationView : IView
     /// <summary>Raised when an animation loops.</summary>
     event EventHandler<RivePlaybackEventArgs>? PlaybackLooped;
 
+    /// <summary>Raised when the active state changes in a state machine.</summary>
+    event EventHandler<RiveStateChangedEventArgs>? StateChanged;
+
     void OnRiveEventReceived(RiveEventReceivedEventArgs e);
     void OnPlaybackStarted(RivePlaybackEventArgs e);
     void OnPlaybackPaused(RivePlaybackEventArgs e);
     void OnPlaybackStopped(RivePlaybackEventArgs e);
     void OnPlaybackLooped(RivePlaybackEventArgs e);
+    void OnStateChanged(RiveStateChangedEventArgs e);
 }

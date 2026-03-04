@@ -69,6 +69,22 @@ public record RiveBoolInputAtPath(string InputName, bool Value, string Path);
 /// <summary>Represents a number input at a nested artboard path.</summary>
 public record RiveNumberInputAtPath(string InputName, float Value, string Path);
 
+/// <summary>Arguments for loading Rive content from a byte array.</summary>
+public record RiveBytesArgs(byte[] Bytes, string? ArtboardName = null, string? StateMachineName = null, string? AnimationName = null);
+
+/// <summary>Event args for state machine state changes.</summary>
+public class RiveStateChangedEventArgs : EventArgs
+{
+    public string StateMachineName { get; }
+    public string StateName { get; }
+
+    public RiveStateChangedEventArgs(string stateMachineName, string stateName)
+    {
+        StateMachineName = stateMachineName;
+        StateName = stateName;
+    }
+}
+
 /// <summary>Event args for Rive events fired from the state machine.</summary>
 public class RiveEventReceivedEventArgs : EventArgs
 {

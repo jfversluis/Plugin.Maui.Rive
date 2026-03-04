@@ -20,6 +20,7 @@ public partial class RiveAnimationViewHandler
             [nameof(IRiveAnimationView.AutoPlay)] = MapAutoPlay,
             [nameof(IRiveAnimationView.Fit)] = MapFit,
             [nameof(IRiveAnimationView.RiveAlignment)] = MapAlignment,
+            [nameof(IRiveAnimationView.LayoutScaleFactor)] = MapLayoutScaleFactor,
         };
 
     public static CommandMapper<IRiveAnimationView, RiveAnimationViewHandler> CommandMapper =
@@ -37,6 +38,7 @@ public partial class RiveAnimationViewHandler
             [nameof(RiveAnimationView.SetNumberInputAtPath)] = MapSetNumberInputAtPath,
             [nameof(RiveAnimationView.SetTextRunValue)] = MapSetTextRunValue,
             [nameof(RiveAnimationView.SetTextRunValueAtPath)] = MapSetTextRunValueAtPath,
+            [nameof(RiveAnimationView.SetRiveBytes)] = MapSetRiveBytes,
         };
 
     public RiveAnimationViewHandler() : base(Mapper, CommandMapper)
@@ -46,4 +48,10 @@ public partial class RiveAnimationViewHandler
     // Partial methods implemented per platform for text run reads
     public partial string? GetTextRunValue(string textRunName);
     public partial string? GetTextRunValueAtPath(string textRunName, string path);
+
+    // Partial methods for introspection
+    public partial string[] GetArtboardNames();
+    public partial string[] GetAnimationNames();
+    public partial string[] GetStateMachineNames();
+    public partial string[] GetStateMachineInputNames();
 }

@@ -32,6 +32,9 @@ public class RiveAnimationView : View, IRiveAnimationView
     public static readonly BindableProperty IsPlayingProperty =
         BindableProperty.Create(nameof(IsPlaying), typeof(bool), typeof(RiveAnimationView), false);
 
+    public static readonly BindableProperty LayoutScaleFactorProperty =
+        BindableProperty.Create(nameof(LayoutScaleFactor), typeof(float), typeof(RiveAnimationView), 1.0f);
+
     public string? ResourceName
     {
         get => (string?)GetValue(ResourceNameProperty);
@@ -87,6 +90,13 @@ public class RiveAnimationView : View, IRiveAnimationView
         set => SetValue(IsPlayingProperty, value);
     }
 
+    /// <summary>Scale factor applied when using Fit.Layout mode.</summary>
+    public float LayoutScaleFactor
+    {
+        get => (float)GetValue(LayoutScaleFactorProperty);
+        set => SetValue(LayoutScaleFactorProperty, value);
+    }
+
     // --- Events ---
 
     /// <inheritdoc />
@@ -104,11 +114,15 @@ public class RiveAnimationView : View, IRiveAnimationView
     /// <inheritdoc />
     public event EventHandler<RivePlaybackEventArgs>? PlaybackLooped;
 
+    /// <inheritdoc />
+    public event EventHandler<RiveStateChangedEventArgs>? StateChanged;
+
     public void OnRiveEventReceived(RiveEventReceivedEventArgs e) => RiveEventReceived?.Invoke(this, e);
     public void OnPlaybackStarted(RivePlaybackEventArgs e) { IsPlaying = true; PlaybackStarted?.Invoke(this, e); }
     public void OnPlaybackPaused(RivePlaybackEventArgs e) { IsPlaying = false; PlaybackPaused?.Invoke(this, e); }
     public void OnPlaybackStopped(RivePlaybackEventArgs e) { IsPlaying = false; PlaybackStopped?.Invoke(this, e); }
     public void OnPlaybackLooped(RivePlaybackEventArgs e) => PlaybackLooped?.Invoke(this, e);
+    public void OnStateChanged(RiveStateChangedEventArgs e) => StateChanged?.Invoke(this, e);
 
     // --- Playback ---
 
@@ -178,4 +192,44 @@ public class RiveAnimationView : View, IRiveAnimationView
     /// <summary>Set a text run value at a nested artboard path.</summary>
     public void SetTextRunValueAtPath(string textRunName, string textValue, string path)
         => Handler?.Invoke(nameof(SetTextRunValueAtPath), new RiveTextRun(textRunName, textValue, path));
+
+    // --- Byte Array Loading ---
+
+    /// <summary>Load a Rive animation from a byte array.</summary>
+    public void SetRiveBytes(byte[] bytes, string? artboardName = null, string? stateMachineName = null, string? animationName = null)
+        => Handler?.Invoke(nameof(SetRiveBytes), new RiveBytesArgs(bytes, artboardName, stateMachineName, animationName));
+
+    // --- Introspection ---
+
+    /// <summary>Get the list of artboard names in the loaded Rive file.</summary>
+    public string[] GetArtboardNames()
+    {
+        if (Handler is RiveAnimationViewHandler h)
+            return h.GetArtboardNames();
+        return [];
+    }
+
+    /// <summary>Get the list of animation names for the current artboard.</summary>
+    public string[] GetAnimationNames()
+    {
+        if (Handler is RiveAnimationViewHandler h)
+            return h.GetAnimationNames();
+        return [];
+    }
+
+    /// <summary>Get the list of state machine names for the current artboard.</summary>
+    public string[] GetStateMachineNames()
+    {
+        if (Handler is RiveAnimationViewHandler h)
+            return h.GetStateMachineNames();
+        return [];
+    }
+
+    /// <summary>Get the list of input names for the current state machine.</summary>
+    public string[] GetStateMachineInputNames()
+    {
+        if (Handler is RiveAnimationViewHandler h)
+            return h.GetStateMachineInputNames();
+        return [];
+    }
 }
