@@ -6,40 +6,54 @@
              Title="Fit &amp; Alignment">
 
     <ScrollView>
-        <Grid RowDefinitions="300, Auto, Auto, Auto, Auto" Padding="16" RowSpacing="12">
+        <VerticalStackLayout Padding="16" Spacing="16">
 
-            <Border StrokeThickness="2" Stroke="Gray" StrokeDashArray="4,2">
+            <Border StrokeThickness="2"
+                    Stroke="{AppThemeBinding Light=#CCCCCC, Dark=#444444}"
+                    StrokeShape="RoundRectangle 12"
+                    StrokeDashArray="6,3">
                 <rive:RiveAnimationView
                     x:Name="riveView"
                     ResourceName="vehicles"
                     AutoPlay="True"
                     Fit="Contain"
                     RiveAlignment="Center"
-                    HeightRequest="300"
+                    HeightRequest="260"
                     HorizontalOptions="Fill"
                     VerticalOptions="Fill" />
             </Border>
 
+            <!-- Current settings display -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                    StrokeShape="RoundRectangle 8"
+                    BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#1E1E1E}"
+                    Padding="12">
+                <Label x:Name="settingsLabel" FontSize="14"
+                       Text="Fit: Contain  •  Alignment: Center" HorizontalOptions="Center"
+                       FontAttributes="Bold" />
+            </Border>
+
             <!-- Fit Mode -->
-            <VerticalStackLayout Grid.Row="1" Spacing="4">
-                <Label Text="Fit Mode:" FontAttributes="Bold" />
-                <FlexLayout Wrap="Wrap" JustifyContent="Center" AlignItems="Center">
-                    <Button Text="Fill" Clicked="OnFitClicked" Margin="2" />
-                    <Button Text="Contain" Clicked="OnFitClicked" Margin="2" />
-                    <Button Text="Cover" Clicked="OnFitClicked" Margin="2" />
-                    <Button Text="FitWidth" Clicked="OnFitClicked" Margin="2" />
-                    <Button Text="FitHeight" Clicked="OnFitClicked" Margin="2" />
-                    <Button Text="ScaleDown" Clicked="OnFitClicked" Margin="2" />
-                    <Button Text="NoFit" Clicked="OnFitClicked" Margin="2" />
-                    <Button Text="Layout" Clicked="OnFitClicked" Margin="2" />
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Fit Mode" FontAttributes="Bold" FontSize="15" />
+                <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                    <Button Text="Fill" Clicked="OnFitClicked" Margin="0,0,8,4" />
+                    <Button Text="Contain" Clicked="OnFitClicked" Margin="0,0,8,4" />
+                    <Button Text="Cover" Clicked="OnFitClicked" Margin="0,0,8,4" />
+                    <Button Text="FitWidth" Clicked="OnFitClicked" Margin="0,0,8,4" />
+                    <Button Text="FitHeight" Clicked="OnFitClicked" Margin="0,0,8,4" />
+                    <Button Text="ScaleDown" Clicked="OnFitClicked" Margin="0,0,8,4" />
+                    <Button Text="NoFit" Clicked="OnFitClicked" Margin="0,0,8,4" />
+                    <Button Text="Layout" Clicked="OnFitClicked" Margin="0,0,8,4" />
                 </FlexLayout>
             </VerticalStackLayout>
 
             <!-- Alignment -->
-            <VerticalStackLayout Grid.Row="2" Spacing="4">
-                <Label Text="Alignment:" FontAttributes="Bold" />
-                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="4" RowSpacing="4"
-                      HorizontalOptions="Center" WidthRequest="300">
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Alignment" FontAttributes="Bold" FontSize="15" />
+                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="6" RowSpacing="6"
+                      HorizontalOptions="Center" WidthRequest="280">
                     <Button Text="↖ TL" Grid.Row="0" Grid.Column="0" Clicked="OnAlignClicked" CommandParameter="TopLeft" />
                     <Button Text="↑ TC" Grid.Row="0" Grid.Column="1" Clicked="OnAlignClicked" CommandParameter="TopCenter" />
                     <Button Text="↗ TR" Grid.Row="0" Grid.Column="2" Clicked="OnAlignClicked" CommandParameter="TopRight" />
@@ -52,22 +66,17 @@
                 </Grid>
             </VerticalStackLayout>
 
-            <!-- Current settings -->
-            <Frame Grid.Row="3" BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#1E1E1E}" Padding="10" CornerRadius="8">
-                <Label x:Name="settingsLabel" FontSize="13"
-                       Text="Fit: Contain | Alignment: Center" HorizontalOptions="Center" />
-            </Frame>
-
             <!-- Layout Scale Factor -->
-            <VerticalStackLayout Grid.Row="4" Spacing="4">
-                <Label Text="Layout Scale Factor (for Fit=Layout):" FontAttributes="Bold" />
-                <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Layout Scale Factor (Fit=Layout)" FontAttributes="Bold" FontSize="15" />
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
                     <Slider x:Name="scaleSlider" Minimum="0.5" Maximum="3.0" Value="1.0"
-                            WidthRequest="250" ValueChanged="OnScaleChanged" />
-                    <Label x:Name="scaleLabel" Text="1.0x" VerticalOptions="Center" />
-                </HorizontalStackLayout>
+                            ValueChanged="OnScaleChanged" />
+                    <Label x:Name="scaleLabel" Grid.Column="1" Text="1.0x" VerticalOptions="Center"
+                           FontAttributes="Bold" WidthRequest="40" />
+                </Grid>
             </VerticalStackLayout>
 
-        </Grid>
+        </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

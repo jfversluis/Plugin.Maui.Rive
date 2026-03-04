@@ -1,4 +1,5 @@
 using Plugin.Maui.Rive;
+using IconFont.Maui.FluentIcons;
 
 namespace Plugin.Maui.Rive.Sample;
 
@@ -10,6 +11,7 @@ public static class MauiProgram
 		builder
 			.UseMauiApp<App>()
 			.UseRive()
+			.UseFluentIcons()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

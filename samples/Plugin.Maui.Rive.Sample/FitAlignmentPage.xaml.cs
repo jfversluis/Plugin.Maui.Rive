@@ -35,6 +35,6 @@ public partial class FitAlignmentPage : ContentPage
 
     void UpdateLabel()
     {
-        settingsLabel.Text = $"Fit: {riveView.Fit} | Alignment: {riveView.RiveAlignment}";
+        settingsLabel.Text = $"Fit: {riveView.Fit}  •  Alignment: {riveView.RiveAlignment}";
     }
 }
