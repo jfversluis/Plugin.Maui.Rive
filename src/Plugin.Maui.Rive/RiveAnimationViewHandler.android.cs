@@ -75,27 +75,105 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     public partial string[] GetArtboardNames()
     {
-        // Android RiveAnimationView only exposes the current ArtboardName, not all names
-        var name = _riveView?.ArtboardName;
-        return name != null ? [name] : [];
+        try
+        {
+            var file = GetRiveFileViaReflection();
+            if (file == null)
+            {
+                var name = _riveView?.ArtboardName;
+                return name != null ? [name] : [];
+            }
+
+            var names = CallListStringMethod(file, "getArtboardNames");
+            return names ?? [];
+        }
+        catch { return []; }
     }
 
     public partial string[] GetAnimationNames()
     {
-        // Not directly exposed through Android binding
-        return [];
+        try
+        {
+            var artboard = GetFirstArtboardViaReflection();
+            if (artboard == null) return [];
+
+            var names = CallListStringMethod(artboard, "getAnimationNames");
+            return names ?? [];
+        }
+        catch { return []; }
     }
 
     public partial string[] GetStateMachineNames()
     {
-        // Not directly exposed through Android binding
-        return [];
+        try
+        {
+            var artboard = GetFirstArtboardViaReflection();
+            if (artboard == null) return [];
+
+            var names = CallListStringMethod(artboard, "getStateMachineNames");
+            return names ?? [];
+        }
+        catch { return []; }
     }
 
     public partial string[] GetStateMachineInputNames()
     {
-        // Not directly exposed through Android binding
-        return [];
+        try
+        {
+            var artboard = GetFirstArtboardViaReflection();
+            if (artboard == null) return [];
+
+            // Get first state machine instance then query input names
+            var smMethod = artboard.Class.GetMethod("getFirstStateMachine");
+            var sm = smMethod.Invoke(artboard);
+            if (sm == null) return [];
+
+            var names = CallListStringMethod(sm as Java.Lang.Object, "getInputNames");
+            return names ?? [];
+        }
+        catch { return []; }
+    }
+
+    /// <summary>
+    /// Gets the Rive File object via reflection since the binding types are filtered out.
+    /// Uses the controller path: RiveAnimationView -> getController() -> getFile()
+    /// </summary>
+    private Java.Lang.Object? GetRiveFileViaReflection()
+    {
+        if (_riveView == null) return null;
+        try
+        {
+            var controllerMethod = _riveView.Class.GetMethod("getController");
+            var controller = controllerMethod.Invoke(_riveView);
+            if (controller == null) return null;
+
+            var fileMethod = (controller as Java.Lang.Object)!.Class.GetMethod("getFile");
+            return fileMethod.Invoke(controller) as Java.Lang.Object;
+        }
+        catch { return null; }
+    }
+
+    private Java.Lang.Object? GetFirstArtboardViaReflection()
+    {
+        var file = GetRiveFileViaReflection();
+        if (file == null) return null;
+        try
+        {
+            var method = file.Class.GetMethod("getFirstArtboard");
+            return method.Invoke(file) as Java.Lang.Object;
+        }
+        catch { return null; }
+    }
+
+    private static string[]? CallListStringMethod(Java.Lang.Object? obj, string methodName)
+    {
+        if (obj == null) return null;
+        var method = obj.Class.GetMethod(methodName);
+        var result = method.Invoke(obj) as Java.Lang.Object;
+        if (result == null) return null;
+
+        var list = new global::Android.Runtime.JavaList<string>(result.Handle, global::Android.Runtime.JniHandleOwnership.DoNotTransfer);
+        return [.. list];
     }
 
     // --- Content Loading ---
