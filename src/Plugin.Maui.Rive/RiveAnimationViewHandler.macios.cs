@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+using CoreGraphics;
 using Microsoft.Maui.Handlers;
 using Foundation;
 using RiveRuntime;
@@ -9,6 +11,12 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 {
     private RiveViewModel? _viewModel;
     private RiveView? _riveView;
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    static extern void void_objc_msgSend_bool(IntPtr receiver, IntPtr selector, [MarshalAs(UnmanagedType.I1)] bool arg);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    static extern void void_objc_msgSend_CGSize(IntPtr receiver, IntPtr selector, CGSize size);
 
     protected override UIView CreatePlatformView()
     {
@@ -56,6 +64,46 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         }
 
         return new UIView { BackgroundColor = UIColor.SystemRed };
+    }
+
+    protected override void ConnectHandler(UIView platformView)
+    {
+        base.ConnectHandler(platformView);
+
+        // After the view is connected, ensure rendering is started
+        if (_riveView != null && _viewModel != null)
+        {
+            // Defer to ensure view is in the window
+            platformView.PerformSelector(new ObjCRuntime.Selector("setNeedsLayout"), null, 0.1);
+            NSTimer.CreateScheduledTimer(0.5, false, _ => EnsureRendering());
+        }
+    }
+
+    private void EnsureRendering()
+    {
+        if (_riveView == null || _viewModel == null) return;
+
+        var h = _riveView.Handle;
+        var frame = _riveView.Frame;
+        
+        if (frame.Width > 0 && frame.Height > 0)
+        {
+            // Ensure MTKView is properly configured for rendering
+            var setEnableSel = ObjCRuntime.Selector.GetHandle("setEnableSetNeedsDisplay:");
+            void_objc_msgSend_bool(h, setEnableSel, true);
+
+            var setPausedSel = ObjCRuntime.Selector.GetHandle("setPaused:");
+            void_objc_msgSend_bool(h, setPausedSel, false);
+
+            var scale = _riveView.ContentScaleFactor;
+            var setDrawSel = ObjCRuntime.Selector.GetHandle("setDrawableSize:");
+            void_objc_msgSend_CGSize(h, setDrawSel, new CGSize(frame.Width * scale, frame.Height * scale));
+
+            _riveView.SetNeedsDisplay();
+            
+            // Explicitly trigger play
+            _viewModel.Play(null, RiveRuntime.RiveLoop.AutoLoop, RiveRuntime.RiveDirection.AutoDirection);
+        }
     }
 
     protected override void DisconnectHandler(UIView platformView)

@@ -5,7 +5,7 @@
              x:Class="Plugin.Maui.Rive.Sample.MainPage"
              Title="Rive Animation Demo">
 
-    <Grid RowDefinitions="*, Auto" Padding="20">
+    <Grid RowDefinitions="*, Auto, Auto" Padding="20">
         <rive:RiveAnimationView 
             x:Name="riveView"
             ResourceName="vehicles"
@@ -23,5 +23,7 @@
             <Button Text="Stop" Clicked="OnStopClicked" AutomationId="StopButton" />
             <Button Text="Reset" Clicked="OnResetClicked" AutomationId="ResetButton" />
         </HorizontalStackLayout>
+
+        <Label x:Name="diagLabel" Grid.Row="2" FontSize="10" TextColor="Red" />
     </Grid>
 </ContentPage>

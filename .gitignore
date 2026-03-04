@@ -400,3 +400,4 @@ FodyWeavers.xsd
 
 # Native frameworks (too large for git - download via build script)
 native/ios/RiveRuntime.xcframework/
+native/android/*.aar

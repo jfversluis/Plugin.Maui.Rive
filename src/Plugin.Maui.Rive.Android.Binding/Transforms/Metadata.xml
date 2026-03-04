@@ -1,0 +1,178 @@
+<metadata>
+  <!-- STRATEGY: Remove everything, then selectively keep only what we need.
+       We need: RiveAnimationView, Fit, Alignment, Loop, Direction, Rive (init) -->
+
+  <!-- Remove entire packages we don't need -->
+  <remove-node path="/api/package[@name='app.rive.core']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.renderers']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.fonts']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core.errors']" />
+
+  <!-- Remove all Kotlin synthetic/internal members globally -->
+  <remove-node path="//method[contains(@name, '$default')]" />
+  <remove-node path="//method[contains(@name, '$kotlin')]" />
+  <remove-node path="//method[contains(@name, '$annotations')]" />
+  <remove-node path="//field[@name='$stable']" />
+  <remove-node path="//field[@name='Companion']" />
+  <remove-node path="//class[contains(@name, '.Companion')]" />
+  <remove-node path="//class[contains(@name, '.WhenMappings')]" />
+  <remove-node path="//class[contains(@name, '.DefaultImpls')]" />
+  <remove-node path="//class[contains(@name, 'Kt') and not(contains(@name, 'Ktx'))]" />
+
+  <!-- Remove Compose-related classes from app.rive package -->
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RiveView']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RememberRiveWorkerKt']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RiveKt']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RivePointerInputMode']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RenderBuffer']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='Result']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='ViewModelInstance']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='ViewModelInstanceSource']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='ViewModelSource']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RiveFileSource']" />
+
+  <!-- Remove asset/file classes we don't need from app.rive -->
+  <remove-node path="/api/package[@name='app.rive']/class[@name='Asset']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='AssetOps']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='AudioAsset']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='FontAsset']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='ImageAsset']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RiveFile']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='Artboard']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='StateMachine']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='Alignment']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='Fit']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RiveDrawToBufferException']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RiveFileException']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RiveInitializationException']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RiveRenderException']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RiveShutdownException']" />
+  <remove-node path="/api/package[@name='app.rive']/class[@name='RiveLog']" />
+
+  <!-- Remove controller package classes we don't need -->
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.controllers']" />
+
+  <!-- Remove heavy core classes: ViewModel*, File, handles, etc. -->
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[starts-with(@name, 'ViewModel')]" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[contains(@name, 'Handle')]" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='File']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='Artboard']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='StateMachine']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='LinearAnimationInstance']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='StateMachineInstance']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='NativeObject']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='RCPointer']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='UniquePointer']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='CloseOnce']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='SMIInput']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='SMIBoolean']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='SMINumber']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='SMITrigger']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='PointerEvents']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='Listeners']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='Helpers']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='Renderer']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='RendererType']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='ResourceType']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='DrawKey']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='EventType']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='AdvanceResult']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='RenderContext']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='RenderContextGL']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='SharedSurface']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='ImageDecoder']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='RendererMetrics']" />
+
+  <!-- Remove various state/animation/exception classes -->
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[contains(@name, 'State')]" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[contains(@name, 'Exception')]" />
+
+  <!-- Remove runtime.kotlin classes we don't need -->
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveFileRequest']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveInitializer']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveViewLifecycleObserver']" />
+  <!-- Keep RiveTextureView as base class for RiveAnimationView -->
+  <!-- Remove problematic methods on RiveTextureView that reference removed types -->
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveTextureView']/method[contains(@return, 'RiveArtboardRenderer')]" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveTextureView']/method[contains(@return, 'RiveFileController')]" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveTextureView']/method[@name='getController']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveTextureView']/method[@name='setController']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveTextureView']/method[@name='getRenderer']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView.Builder']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView.RendererAttributes']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView.Companion']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveArtboardRenderer']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='Rive.NativeLoader']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='ChangedInput']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveEvent']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveGeneralEvent']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveOpenURLEvent']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveEventReport']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveFont']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveRenderImage']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveSurface']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveTextValueRun']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAudio']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='AudioEngine']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='SuspendLazy']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveEGLPBufferSurface']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveEGLSurface']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='EGLError']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='CommandQueue']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='CommandQueueJNIBridge']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='DeferredResult']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='BindableArtboard']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='BytesRequest']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='CDNAssetLoader']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='ContextAssetLoader']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='ControllerState']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='FallbackAssetLoader']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveFileController']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='ViewModel']" />
+
+  <!-- Remove interface references that cause issues -->
+  <remove-node path="//interface" />
+
+  <!-- Remove asset-related classes from app.rive.runtime.kotlin.core -->
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='FileAsset']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='AudioAsset']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='FontAsset']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='ImageAsset']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='FileAssetLoader']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='AudioHandle']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='FontHandle']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='ImageHandle']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='FileHandle']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='RiveLog']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='Fonts']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='FontHelper']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='NativeFontHelper']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='SystemFontsParser']" />
+
+  <!-- Fix Loop member name collision - LOOP field conflicts with Loop class name -->
+  <attr path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='Loop']/field[@name='LOOP']" name="managedName">LoopMode</attr>
+  <attr path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='Loop']/method[@name='loop']" name="managedName">LoopValue</attr>
+
+  <!-- Remove BytesRequest from core package too -->
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='BytesRequest']" />
+
+  <!-- Remove problematic methods on RiveAnimationView -->
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='getController']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='setController']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='getArtboardRenderer']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='getRendererAttributes']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='getFile']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='getAnimations']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='getStateMachines']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='getPlayingAnimations']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='getPlayingStateMachines']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='saveControllerState']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='restoreControllerState']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='setAssetLoader']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='setMultipleStates']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/method[@name='setRiveFile']" />
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='RiveAnimationView']/constructor[count(parameter) = 1 and parameter[@type='app.rive.runtime.kotlin.RiveAnimationView.Builder']]" />
+
+  <!-- Remove Rive class members we don't need -->
+  <remove-node path="/api/package[@name='app.rive.runtime.kotlin']/class[@name='Rive']/method[@name='calculateRequiredAlignment']" />
+</metadata>

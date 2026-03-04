@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>21</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Plugin.Maui.Rive.Android.Binding</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AndroidLibrary Include="..\..\native\android\rive-android-11.2.1.aar" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TransformFile Include="Transforms\Metadata.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Rive Android transitive dependencies -->
+    <PackageReference Include="Xamarin.Kotlin.StdLib" Version="2.1.0" />
+    <PackageReference Include="Xamarin.AndroidX.Core" Version="1.15.0.2" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Ktx" Version="2.8.7.2" />
+    <PackageReference Include="Xamarin.AndroidX.Startup.StartupRuntime" Version="1.2.0.2" />
+    <PackageReference Include="Xamarin.Android.Volley" Version="1.2.1.6" />
+  </ItemGroup>
+
+</Project>

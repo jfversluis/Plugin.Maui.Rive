@@ -1,12 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net10.0-ios;net10.0</TargetFrameworks>
+		<TargetFrameworks>net10.0-ios;net10.0-android;net10.0</TargetFrameworks>
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<UseMaui>true</UseMaui>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21</SupportedOSPlatformVersion>
 
 		<!-- NuGet -->
 		<Authors>Gerald Versluis</Authors>
@@ -36,6 +37,11 @@
 		<Compile Remove="**\*.macios.cs" />
 		<None Include="**\*.macios.cs" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)" />
 	</ItemGroup>
+	<!-- Android -->
+	<ItemGroup Condition="$(TargetFramework.StartsWith('net')) == true AND $(TargetFramework.Contains('-android')) != true">
+		<Compile Remove="**\*.android.cs" />
+		<None Include="**\*.android.cs" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)" />
+	</ItemGroup>
 	<!-- .NET (generic) -->
 	<ItemGroup Condition="!($(TargetFramework.StartsWith('net')) == true AND $(TargetFramework.EndsWith('.0')) == true AND $(TargetFramework.Contains('-')) != true)">
 		<Compile Remove="**\*.net.cs" />
@@ -49,6 +55,10 @@
 
 	<ItemGroup Condition="$(TargetFramework.Contains('-ios'))">
 		<ProjectReference Include="..\Plugin.Maui.Rive.iOS.Binding\Plugin.Maui.Rive.iOS.Binding.csproj" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(TargetFramework.Contains('-android'))">
+		<ProjectReference Include="..\Plugin.Maui.Rive.Android.Binding\Plugin.Maui.Rive.Android.Binding.csproj" />
 	</ItemGroup>
 
 	<!-- Package additions -->
