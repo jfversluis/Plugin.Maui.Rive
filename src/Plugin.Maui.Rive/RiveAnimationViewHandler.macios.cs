@@ -7,91 +7,210 @@ using UIKit;
 
 namespace Plugin.Maui.Rive;
 
-public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, UIView>
+/// <summary>
+/// Container view that defers adding the RiveView until it has a valid frame.
+/// MAUI's layout system does things to the platform view (like setting frame to zero,
+/// manipulating the layer, etc.) that interfere with RiveView's Metal rendering.
+/// By using a container, MAUI manages the container while the RiveView
+/// lives inside with its Metal layer undisturbed.
+/// </summary>
+internal class RiveHostView : UIView
 {
     private RiveViewModel? _viewModel;
     private RiveView? _riveView;
-    private RiveStateMachineDelegateProxy? _stateMachineDelegate;
-    private RivePlayerDelegateProxy? _playerDelegate;
+    private bool _isSetUp;
+    private readonly string? _resourceName;
+    private readonly string? _url;
+    private readonly string? _stateMachineName;
+    private readonly string? _artboardName;
+    private readonly bool _autoPlay;
+    private readonly RiveFit _fit;
+    private readonly RiveAlignment _alignment;
 
-    protected override UIView CreatePlatformView()
+    public RiveHostView(
+        string? resourceName, string? url,
+        string? stateMachineName, string? artboardName,
+        bool autoPlay, RiveFit fit, RiveAlignment alignment)
     {
-        var virtualView = VirtualView;
-        var fit = MapFitToNative(virtualView.Fit);
-        var alignment = MapAlignmentToNative(virtualView.RiveAlignment);
+        _resourceName = resourceName;
+        _url = url;
+        _stateMachineName = stateMachineName;
+        _artboardName = artboardName;
+        _autoPlay = autoPlay;
+        _fit = fit;
+        _alignment = alignment;
+        ClipsToBounds = true;
+    }
 
+    public override void LayoutSubviews()
+    {
+        base.LayoutSubviews();
+
+        if (!_isSetUp && Bounds.Width > 0 && Bounds.Height > 0 && Window != null)
+        {
+            SetupRiveView();
+        }
+
+        if (_riveView != null)
+        {
+            _riveView.Frame = Bounds;
+        }
+    }
+
+    private void SetupRiveView()
+    {
         try
         {
-            if (!string.IsNullOrEmpty(virtualView.ResourceName))
+            if (!string.IsNullOrEmpty(_resourceName))
             {
                 _viewModel = new RiveViewModel(
-                    virtualView.ResourceName!,
+                    _resourceName!,
                     "riv",
                     NSBundle.MainBundle,
-                    virtualView.StateMachineName,
-                    fit,
-                    alignment,
-                    virtualView.AutoPlay,
-                    virtualView.ArtboardName,
+                    _stateMachineName,
+                    _fit,
+                    _alignment,
+                    _autoPlay,
+                    _artboardName,
                     true,
                     null);
             }
-            else if (!string.IsNullOrEmpty(virtualView.Url))
+            else if (!string.IsNullOrEmpty(_url))
             {
                 _viewModel = new RiveViewModel(
-                    virtualView.Url!,
-                    virtualView.StateMachineName,
-                    fit,
-                    alignment,
-                    virtualView.AutoPlay,
+                    _url!,
+                    _stateMachineName,
+                    _fit,
+                    _alignment,
+                    _autoPlay,
                     true,
-                    virtualView.ArtboardName);
+                    _artboardName);
             }
 
             if (_viewModel != null)
             {
-                // Create a container UIView and embed the RiveView inside with autolayout
                 _riveView = _viewModel.CreateRiveView();
-                var container = new UIView();
-                container.AddSubview(_riveView);
-                _riveView.TranslatesAutoresizingMaskIntoConstraints = false;
-                NSLayoutConstraint.ActivateConstraints(new[]
-                {
-                    _riveView.LeadingAnchor.ConstraintEqualTo(container.LeadingAnchor),
-                    _riveView.TrailingAnchor.ConstraintEqualTo(container.TrailingAnchor),
-                    _riveView.TopAnchor.ConstraintEqualTo(container.TopAnchor),
-                    _riveView.BottomAnchor.ConstraintEqualTo(container.BottomAnchor),
-                });
-                return container;
+                _riveView.Frame = Bounds;
+                AddSubview(_riveView);
+                _isSetUp = true;
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Error: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] SetupRiveView error: {ex}");
         }
+    }
 
-        return new UIView { BackgroundColor = UIColor.SystemRed };
+    public RiveViewModel? ViewModel => _viewModel;
+    public RiveView? RiveView => _riveView;
+    public bool IsSetUp => _isSetUp;
+
+    public void TearDown()
+    {
+        _viewModel?.DeregisterView();
+        _viewModel?.Dispose();
+        _viewModel = null;
+        _riveView?.RemoveFromSuperview();
+        _riveView = null;
+        _isSetUp = false;
+    }
+
+    /// <summary>
+    /// Recreate with new parameters (for dynamic resource changes).
+    /// </summary>
+    public void Reload(string? resourceName, string? url, string? stateMachineName, string? artboardName, bool autoPlay, RiveFit fit, RiveAlignment alignment)
+    {
+        TearDown();
+
+        try
+        {
+            RiveViewModel? newVm = null;
+            if (!string.IsNullOrEmpty(resourceName))
+            {
+                newVm = new RiveViewModel(
+                    resourceName!,
+                    "riv",
+                    NSBundle.MainBundle,
+                    stateMachineName,
+                    fit,
+                    alignment,
+                    autoPlay,
+                    artboardName,
+                    true,
+                    null);
+            }
+            else if (!string.IsNullOrEmpty(url))
+            {
+                newVm = new RiveViewModel(
+                    url!,
+                    stateMachineName,
+                    fit,
+                    alignment,
+                    autoPlay,
+                    true,
+                    artboardName);
+            }
+
+            if (newVm != null)
+            {
+                _viewModel = newVm;
+                _riveView = _viewModel.CreateRiveView();
+                _riveView.Frame = Bounds;
+                AddSubview(_riveView);
+                _isSetUp = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Reload error: {ex}");
+        }
+    }
+}
+
+public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, UIView>
+{
+    private RiveHostView? _hostView;
+    private RiveStateMachineDelegateProxy? _stateMachineDelegate;
+    private RivePlayerDelegateProxy? _playerDelegate;
+
+    // Convenience accessors
+    private RiveViewModel? _viewModel => _hostView?.ViewModel;
+    private RiveView? _riveView => _hostView?.RiveView;
+
+    protected override UIView CreatePlatformView()
+    {
+        var virtualView = VirtualView;
+        _hostView = new RiveHostView(
+            virtualView.ResourceName,
+            virtualView.Url,
+            virtualView.StateMachineName,
+            virtualView.ArtboardName,
+            virtualView.AutoPlay,
+            MapFitToNative(virtualView.Fit),
+            MapAlignmentToNative(virtualView.RiveAlignment));
+
+        return _hostView;
     }
 
     protected override void ConnectHandler(UIView platformView)
     {
         base.ConnectHandler(platformView);
 
-        if (_riveView != null && _viewModel != null)
+        // Delegates will be wired once the host view sets up the Rive view
+        WireDelegatesWhenReady();
+    }
+
+    private void WireDelegatesWhenReady()
+    {
+        if (_hostView?.IsSetUp == true && _viewModel != null)
         {
-            // Wire up delegates for events and playback callbacks
             _stateMachineDelegate = new RiveStateMachineDelegateProxy(this);
             _playerDelegate = new RivePlayerDelegateProxy(this);
-
-            // Set delegates via ObjC runtime on the view model
             SetDelegatesOnViewModel(_viewModel, _stateMachineDelegate, _playerDelegate);
-
-            // Restart playback to ensure CADisplayLink connects
-            NSTimer.CreateScheduledTimer(0.5, false, _ =>
-            {
-                _viewModel.Stop();
-                _viewModel.Play(null, RiveRuntime.RiveLoop.AutoLoop, RiveRuntime.RiveDirection.AutoDirection);
-            });
+        }
+        else
+        {
+            NSTimer.CreateScheduledTimer(0.2, false, _ => WireDelegatesWhenReady());
         }
     }
 
@@ -99,7 +218,6 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         try
         {
-            // Use objc_msgSend directly to set delegates
             var smDelegSel = Selector.GetHandle("setStateMachineDelegate:");
             if (viewModel.RespondsToSelector(new Selector("setStateMachineDelegate:")))
                 void_objc_msgSend_IntPtr(viewModel.Handle, smDelegSel, smDelegate.Handle);
@@ -119,10 +237,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     protected override void DisconnectHandler(UIView platformView)
     {
-        _viewModel?.DeregisterView();
-        _viewModel?.Dispose();
-        _viewModel = null;
-        _riveView = null;
+        _hostView?.TearDown();
         _stateMachineDelegate = null;
         _playerDelegate = null;
         base.DisconnectHandler(platformView);
@@ -152,7 +267,6 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         try
         {
-            // Access artboard via the RiveModel -> RiveFile -> Artboard chain
             var riveModel = _viewModel?.RiveModel;
             if (riveModel == null) return [];
 
@@ -267,67 +381,22 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     public static void MapResourceName(RiveAnimationViewHandler handler, IRiveAnimationView view)
     {
-        // Reload the entire view when the resource changes at runtime
-        if (handler._viewModel == null) return;
-        handler.ReloadRiveContent();
+        if (handler._hostView == null) return;
+        handler._hostView.Reload(
+            view.ResourceName, view.Url,
+            view.StateMachineName, view.ArtboardName,
+            view.AutoPlay,
+            MapFitToNative(view.Fit), MapAlignmentToNative(view.RiveAlignment));
     }
 
     public static void MapUrl(RiveAnimationViewHandler handler, IRiveAnimationView view)
     {
-        if (handler._viewModel == null) return;
-        handler.ReloadRiveContent();
-    }
-
-    private void ReloadRiveContent()
-    {
-        var virtualView = VirtualView;
-        if (virtualView == null) return;
-
-        _viewModel?.DeregisterView();
-        _viewModel?.Dispose();
-
-        var fit = MapFitToNative(virtualView.Fit);
-        var alignment = MapAlignmentToNative(virtualView.RiveAlignment);
-
-        try
-        {
-            if (!string.IsNullOrEmpty(virtualView.ResourceName))
-            {
-                _viewModel = new RiveViewModel(
-                    virtualView.ResourceName!,
-                    "riv",
-                    NSBundle.MainBundle,
-                    virtualView.StateMachineName,
-                    fit,
-                    alignment,
-                    virtualView.AutoPlay,
-                    virtualView.ArtboardName,
-                    true,
-                    null);
-            }
-            else if (!string.IsNullOrEmpty(virtualView.Url))
-            {
-                _viewModel = new RiveViewModel(
-                    virtualView.Url!,
-                    virtualView.StateMachineName,
-                    fit,
-                    alignment,
-                    virtualView.AutoPlay,
-                    true,
-                    virtualView.ArtboardName);
-            }
-
-            if (_viewModel != null && _riveView != null)
-            {
-                _viewModel.SetRiveView(_riveView);
-                if (_stateMachineDelegate != null && _playerDelegate != null)
-                    SetDelegatesOnViewModel(_viewModel, _stateMachineDelegate, _playerDelegate);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Reload error: {ex}");
-        }
+        if (handler._hostView == null) return;
+        handler._hostView.Reload(
+            view.ResourceName, view.Url,
+            view.StateMachineName, view.ArtboardName,
+            view.AutoPlay,
+            MapFitToNative(view.Fit), MapAlignmentToNative(view.RiveAlignment));
     }
 
     public static void MapAutoPlay(RiveAnimationViewHandler handler, IRiveAnimationView view)
@@ -453,7 +522,6 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
                     return;
                 }
 
-                // Reconfigure the view model with the new file's artboard
                 handler._viewModel?.ConfigureModel(
                     bytesArgs.ArtboardName,
                     bytesArgs.StateMachineName,
