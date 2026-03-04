@@ -5,10 +5,10 @@
              x:Class="Plugin.Maui.Rive.Sample.MainPage"
              Title="Rive Animation Demo">
 
-    <Grid RowDefinitions="*, Auto" Padding="20">
+    <Grid RowDefinitions="*, Auto, Auto" Padding="20">
         <rive:RiveAnimationView 
             x:Name="riveView"
-            ResourceName="vehicles"
+            ResourceName="bear"
             AutoPlay="True"
             Fit="Contain"
             HeightRequest="400"
@@ -23,5 +23,8 @@
             <Button Text="Stop" Clicked="OnStopClicked" AutomationId="StopButton" />
             <Button Text="Reset" Clicked="OnResetClicked" AutomationId="ResetButton" />
         </HorizontalStackLayout>
+
+        <Label x:Name="statusLabel" Grid.Row="2" FontSize="12" HorizontalOptions="Center" Margin="0,10,0,0"
+               AutomationId="StatusLabel" />
     </Grid>
 </ContentPage>

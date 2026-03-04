@@ -1,6 +1,7 @@
 using CoreGraphics;
 using Microsoft.Maui.Handlers;
 using Foundation;
+using ObjCRuntime;
 using RiveRuntime;
 using UIKit;
 
@@ -10,6 +11,8 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 {
     private RiveViewModel? _viewModel;
     private RiveView? _riveView;
+    private RiveStateMachineDelegateProxy? _stateMachineDelegate;
+    private RivePlayerDelegateProxy? _playerDelegate;
 
     protected override UIView CreatePlatformView()
     {
@@ -64,10 +67,16 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         base.ConnectHandler(platformView);
 
-        // After the view is in the MAUI hierarchy, restart playback to ensure
-        // the CADisplayLink connects to the correct window scene and frame draws work
         if (_riveView != null && _viewModel != null)
         {
+            // Wire up delegates for events and playback callbacks
+            _stateMachineDelegate = new RiveStateMachineDelegateProxy(this);
+            _playerDelegate = new RivePlayerDelegateProxy(this);
+
+            // Set delegates via ObjC runtime on the view model
+            SetDelegatesOnViewModel(_viewModel, _stateMachineDelegate, _playerDelegate);
+
+            // Restart playback to ensure CADisplayLink connects
             NSTimer.CreateScheduledTimer(0.5, false, _ =>
             {
                 _viewModel.Stop();
@@ -76,14 +85,54 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         }
     }
 
+    private static void SetDelegatesOnViewModel(RiveViewModel viewModel, RiveStateMachineDelegateProxy smDelegate, RivePlayerDelegateProxy playerDelegate)
+    {
+        try
+        {
+            // Use objc_msgSend directly to set delegates
+            var smDelegSel = Selector.GetHandle("setStateMachineDelegate:");
+            if (viewModel.RespondsToSelector(new Selector("setStateMachineDelegate:")))
+                void_objc_msgSend_IntPtr(viewModel.Handle, smDelegSel, smDelegate.Handle);
+
+            var playerDelegSel = Selector.GetHandle("setPlayerDelegate:");
+            if (viewModel.RespondsToSelector(new Selector("setPlayerDelegate:")))
+                void_objc_msgSend_IntPtr(viewModel.Handle, playerDelegSel, playerDelegate.Handle);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Delegate setup: {ex.Message}");
+        }
+    }
+
+    [System.Runtime.InteropServices.DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    static extern void void_objc_msgSend_IntPtr(IntPtr receiver, IntPtr selector, IntPtr arg);
+
     protected override void DisconnectHandler(UIView platformView)
     {
         _viewModel?.DeregisterView();
         _viewModel?.Dispose();
         _viewModel = null;
         _riveView = null;
+        _stateMachineDelegate = null;
+        _playerDelegate = null;
         base.DisconnectHandler(platformView);
     }
+
+    // --- Text Runs ---
+
+    public partial string? GetTextRunValue(string textRunName)
+    {
+        return _viewModel?.GetTextRunValue(textRunName);
+    }
+
+    public partial string? GetTextRunValueAtPath(string textRunName, string path)
+    {
+        // iOS SDK doesn't have a path variant on RiveViewModel directly;
+        // fall back to artboard-level access if available
+        return _viewModel?.GetTextRunValue(textRunName);
+    }
+
+    // --- Mapping helpers ---
 
     private static RiveRuntime.RiveFit MapFitToNative(RiveFitMode fit) => fit switch
     {
@@ -112,8 +161,87 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         _ => RiveRuntime.RiveAlignment.Center,
     };
 
-    public static void MapResourceName(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
-    public static void MapUrl(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
+    private static RiveRuntime.RiveLoop MapLoopToNative(RiveLoopMode loop) => loop switch
+    {
+        RiveLoopMode.OneShot => RiveRuntime.RiveLoop.OneShot,
+        RiveLoopMode.Loop => RiveRuntime.RiveLoop.Loop,
+        RiveLoopMode.PingPong => RiveRuntime.RiveLoop.PingPong,
+        _ => RiveRuntime.RiveLoop.AutoLoop,
+    };
+
+    private static RiveRuntime.RiveDirection MapDirectionToNative(RiveDirectionMode dir) => dir switch
+    {
+        RiveDirectionMode.Backwards => RiveRuntime.RiveDirection.Backwards,
+        RiveDirectionMode.Forwards => RiveRuntime.RiveDirection.Forwards,
+        _ => RiveRuntime.RiveDirection.AutoDirection,
+    };
+
+    // --- Property Mappers ---
+
+    public static void MapResourceName(RiveAnimationViewHandler handler, IRiveAnimationView view)
+    {
+        // Reload the entire view when the resource changes at runtime
+        if (handler._viewModel == null) return;
+        handler.ReloadRiveContent();
+    }
+
+    public static void MapUrl(RiveAnimationViewHandler handler, IRiveAnimationView view)
+    {
+        if (handler._viewModel == null) return;
+        handler.ReloadRiveContent();
+    }
+
+    private void ReloadRiveContent()
+    {
+        var virtualView = VirtualView;
+        if (virtualView == null) return;
+
+        _viewModel?.DeregisterView();
+        _viewModel?.Dispose();
+
+        var fit = MapFitToNative(virtualView.Fit);
+        var alignment = MapAlignmentToNative(virtualView.RiveAlignment);
+
+        try
+        {
+            if (!string.IsNullOrEmpty(virtualView.ResourceName))
+            {
+                _viewModel = new RiveViewModel(
+                    virtualView.ResourceName!,
+                    "riv",
+                    NSBundle.MainBundle,
+                    virtualView.StateMachineName,
+                    fit,
+                    alignment,
+                    virtualView.AutoPlay,
+                    virtualView.ArtboardName,
+                    true,
+                    null);
+            }
+            else if (!string.IsNullOrEmpty(virtualView.Url))
+            {
+                _viewModel = new RiveViewModel(
+                    virtualView.Url!,
+                    virtualView.StateMachineName,
+                    fit,
+                    alignment,
+                    virtualView.AutoPlay,
+                    true,
+                    virtualView.ArtboardName);
+            }
+
+            if (_viewModel != null && _riveView != null)
+            {
+                _viewModel.SetRiveView(_riveView);
+                if (_stateMachineDelegate != null && _playerDelegate != null)
+                    SetDelegatesOnViewModel(_viewModel, _stateMachineDelegate, _playerDelegate);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Reload error: {ex}");
+        }
+    }
 
     public static void MapAutoPlay(RiveAnimationViewHandler handler, IRiveAnimationView view)
     {
@@ -133,9 +261,21 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             handler._viewModel.Alignment = MapAlignmentToNative(view.RiveAlignment);
     }
 
+    // --- Command Mappers ---
+
     public static void MapPlay(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        handler._viewModel?.Play(null, RiveRuntime.RiveLoop.AutoLoop, RiveRuntime.RiveDirection.AutoDirection);
+        if (args is RivePlayArgs playArgs)
+        {
+            handler._viewModel?.Play(
+                playArgs.AnimationName,
+                MapLoopToNative(playArgs.Loop),
+                MapDirectionToNative(playArgs.Direction));
+        }
+        else
+        {
+            handler._viewModel?.Play(null, RiveRuntime.RiveLoop.AutoLoop, RiveRuntime.RiveDirection.AutoDirection);
+        }
     }
 
     public static void MapPause(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
@@ -169,5 +309,128 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         if (args is RiveNumberInput input)
             handler._viewModel?.SetFloatInput(input.Name, input.Value);
+    }
+
+    public static void MapFireTriggerAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
+    {
+        if (args is RiveTriggerAtPath input)
+            handler._viewModel?.TriggerInput(input.InputName);
+    }
+
+    public static void MapSetBoolInputAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
+    {
+        if (args is RiveBoolInputAtPath input)
+            handler._viewModel?.SetBooleanInput(input.InputName, input.Value);
+    }
+
+    public static void MapSetNumberInputAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
+    {
+        if (args is RiveNumberInputAtPath input)
+            handler._viewModel?.SetFloatInput(input.InputName, input.Value);
+    }
+
+    public static void MapSetTextRunValue(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
+    {
+        if (args is RiveTextRun textRun)
+        {
+            try { handler._viewModel?.SetTextRunValue(textRun.TextRunName, textRun.TextValue, out _); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] SetTextRun: {ex.Message}"); }
+        }
+    }
+
+    public static void MapSetTextRunValueAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
+    {
+        if (args is RiveTextRun textRun)
+        {
+            try { handler._viewModel?.SetTextRunValue(textRun.TextRunName, textRun.TextValue, out _); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] SetTextRunAtPath: {ex.Message}"); }
+        }
+    }
+}
+
+// --- Delegate Proxies ---
+
+/// <summary>Proxy for RiveStateMachineDelegate to receive Rive events.</summary>
+internal class RiveStateMachineDelegateProxy : RiveStateMachineDelegate
+{
+    private readonly WeakReference<RiveAnimationViewHandler> _handlerRef;
+
+    public RiveStateMachineDelegateProxy(RiveAnimationViewHandler handler)
+    {
+        _handlerRef = new WeakReference<RiveAnimationViewHandler>(handler);
+    }
+
+    [Export("onRiveEventReceived:")]
+    public void OnRiveEventReceived(NSObject riveEvent)
+    {
+        if (!_handlerRef.TryGetTarget(out var handler)) return;
+
+        var name = riveEvent.ValueForKey(new NSString("name"))?.ToString() ?? "";
+        var delay = 0f;
+        var props = new Dictionary<string, object>();
+
+        try
+        {
+            var delayVal = riveEvent.ValueForKey(new NSString("delay"));
+            if (delayVal is NSNumber num)
+                delay = num.FloatValue;
+
+            var propsVal = riveEvent.ValueForKey(new NSString("properties"));
+            if (propsVal is NSDictionary dict)
+            {
+                foreach (var key in dict.Keys)
+                {
+                    var val = dict[key];
+                    if (val is NSString s) props[key.ToString()] = s.ToString();
+                    else if (val is NSNumber n) props[key.ToString()] = n.DoubleValue;
+                    else if (val != null) props[key.ToString()] = val.ToString()!;
+                }
+            }
+        }
+        catch { /* best effort */ }
+
+        handler.VirtualView?.OnRiveEventReceived(new RiveEventReceivedEventArgs(name, delay, props));
+    }
+}
+
+/// <summary>Proxy for RivePlayerDelegate to receive playback callbacks.</summary>
+internal class RivePlayerDelegateProxy : RivePlayerDelegate
+{
+    private readonly WeakReference<RiveAnimationViewHandler> _handlerRef;
+
+    public RivePlayerDelegateProxy(RiveAnimationViewHandler handler)
+    {
+        _handlerRef = new WeakReference<RiveAnimationViewHandler>(handler);
+    }
+
+    [Export("player:didAdvanceby:")]
+    public void DidAdvance(NSObject player, double seconds) { }
+
+    [Export("player:playedWithModel:")]
+    public void Played(NSObject player, NSObject? model)
+    {
+        if (!_handlerRef.TryGetTarget(out var handler)) return;
+        handler.VirtualView?.OnPlaybackStarted(new RivePlaybackEventArgs());
+    }
+
+    [Export("player:pausedWithModel:")]
+    public void Paused(NSObject player, NSObject? model)
+    {
+        if (!_handlerRef.TryGetTarget(out var handler)) return;
+        handler.VirtualView?.OnPlaybackPaused(new RivePlaybackEventArgs());
+    }
+
+    [Export("player:stoppedWithModel:")]
+    public void Stopped(NSObject player, NSObject? model)
+    {
+        if (!_handlerRef.TryGetTarget(out var handler)) return;
+        handler.VirtualView?.OnPlaybackStopped(new RivePlaybackEventArgs());
+    }
+
+    [Export("player:loopedWithModel:type:")]
+    public void Looped(NSObject player, NSObject? model, nint type)
+    {
+        if (!_handlerRef.TryGetTarget(out var handler)) return;
+        handler.VirtualView?.OnPlaybackLooped(new RivePlaybackEventArgs());
     }
 }

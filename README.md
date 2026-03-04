@@ -66,25 +66,57 @@ Place your `.riv` file in `Resources/Raw/` (e.g., `Resources/Raw/animation.riv`)
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `ResourceName` | `string?` | `null` | Name of the .riv file (without extension) in Resources/Raw |
+| `Url` | `string?` | `null` | URL of a .riv file to load from the web |
 | `AutoPlay` | `bool` | `true` | Whether the animation plays automatically |
 | `Fit` | `RiveFitMode` | `Contain` | How the animation fits within the view |
 | `RiveAlignment` | `RiveAlignmentMode` | `Center` | Alignment of the animation within the view |
 | `ArtboardName` | `string?` | `null` | Specific artboard name (default artboard if null) |
 | `StateMachineName` | `string?` | `null` | State machine to use |
 | `AnimationName` | `string?` | `null` | Specific animation name |
+| `IsPlaying` | `bool` | `false` | Whether the animation is currently playing (updated automatically) |
 
 ### RiveAnimationView Methods
 
 ```csharp
-riveView.Play();       // Start/resume playback
-riveView.Pause();      // Pause playback
-riveView.Stop();       // Stop playback
-riveView.Reset();      // Reset to initial state
+// Playback control with optional parameters
+riveView.Play();                                           // Play with defaults
+riveView.Play("animationName");                            // Play specific animation
+riveView.Play(loop: RiveLoopMode.OneShot);                 // Play once
+riveView.Play(direction: RiveDirectionMode.Backwards);     // Play backwards
+riveView.Pause();
+riveView.Stop();
+riveView.Reset();
 
 // State machine inputs
 riveView.FireTrigger("triggerName");
 riveView.SetBoolInput("inputName", true);
-riveView.SetNumberInput("inputName", 42.0);
+riveView.SetNumberInput("inputName", 42.0f);
+
+// Nested artboard inputs
+riveView.FireTriggerAtPath("triggerName", "path/to/artboard");
+riveView.SetBoolInputAtPath("inputName", true, "path/to/artboard");
+riveView.SetNumberInputAtPath("inputName", 42.0f, "path/to/artboard");
+
+// Text runs
+string? text = riveView.GetTextRunValue("textRunName");
+riveView.SetTextRunValue("textRunName", "new value");
+string? nestedText = riveView.GetTextRunValueAtPath("textRunName", "path");
+riveView.SetTextRunValueAtPath("textRunName", "new value", "path");
+```
+
+### Events
+
+```csharp
+riveView.PlaybackStarted += (s, e) => Console.WriteLine("Playing");
+riveView.PlaybackPaused += (s, e) => Console.WriteLine("Paused");
+riveView.PlaybackStopped += (s, e) => Console.WriteLine("Stopped");
+riveView.PlaybackLooped += (s, e) => Console.WriteLine("Looped");
+riveView.RiveEventReceived += (s, e) =>
+{
+    Console.WriteLine($"Event: {e.Name}, Delay: {e.Delay}");
+    foreach (var prop in e.Properties)
+        Console.WriteLine($"  {prop.Key} = {prop.Value}");
+};
 ```
 
 ### Enums
@@ -92,6 +124,10 @@ riveView.SetNumberInput("inputName", 42.0);
 **RiveFitMode**: `Fill`, `Contain`, `Cover`, `FitWidth`, `FitHeight`, `ScaleDown`, `NoFit`, `Layout`
 
 **RiveAlignmentMode**: `TopLeft`, `TopCenter`, `TopRight`, `CenterLeft`, `Center`, `CenterRight`, `BottomLeft`, `BottomCenter`, `BottomRight`
+
+**RiveLoopMode**: `OneShot`, `Loop`, `PingPong`, `Auto`
+
+**RiveDirectionMode**: `Backwards`, `Forwards`, `Auto`
 
 ## Building from Source
 

@@ -7,6 +7,9 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     protected override object CreatePlatformView() =>
         throw new PlatformNotSupportedException("Rive is not supported on this platform.");
 
+    public partial string? GetTextRunValue(string textRunName) => null;
+    public partial string? GetTextRunValueAtPath(string textRunName, string path) => null;
+
     public static void MapResourceName(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
     public static void MapUrl(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
     public static void MapAutoPlay(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
@@ -19,4 +22,9 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     public static void MapFireTrigger(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args) { }
     public static void MapSetBoolInput(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args) { }
     public static void MapSetNumberInput(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args) { }
+    public static void MapFireTriggerAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args) { }
+    public static void MapSetBoolInputAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args) { }
+    public static void MapSetNumberInputAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args) { }
+    public static void MapSetTextRunValue(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args) { }
+    public static void MapSetTextRunValueAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args) { }
 }

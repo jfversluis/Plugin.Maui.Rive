@@ -32,9 +32,18 @@ public partial class RiveAnimationViewHandler
             [nameof(RiveAnimationView.FireTrigger)] = MapFireTrigger,
             [nameof(RiveAnimationView.SetBoolInput)] = MapSetBoolInput,
             [nameof(RiveAnimationView.SetNumberInput)] = MapSetNumberInput,
+            [nameof(RiveAnimationView.FireTriggerAtPath)] = MapFireTriggerAtPath,
+            [nameof(RiveAnimationView.SetBoolInputAtPath)] = MapSetBoolInputAtPath,
+            [nameof(RiveAnimationView.SetNumberInputAtPath)] = MapSetNumberInputAtPath,
+            [nameof(RiveAnimationView.SetTextRunValue)] = MapSetTextRunValue,
+            [nameof(RiveAnimationView.SetTextRunValueAtPath)] = MapSetTextRunValueAtPath,
         };
 
     public RiveAnimationViewHandler() : base(Mapper, CommandMapper)
     {
     }
+
+    // Partial methods implemented per platform for text run reads
+    public partial string? GetTextRunValue(string textRunName);
+    public partial string? GetTextRunValueAtPath(string textRunName, string path);
 }
