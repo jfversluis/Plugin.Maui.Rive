@@ -16,79 +16,70 @@ void OnResetClicked(object? sender, EventArgs e) => riveView.Reset();
 
 #if IOS
 [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
-static extern void void_objc_msgSend_bool(IntPtr receiver, IntPtr selector, [MarshalAs(UnmanagedType.I1)] bool arg);
-
-[DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
 [return: MarshalAs(UnmanagedType.I1)]
 static extern bool bool_objc_msgSend(IntPtr receiver, IntPtr selector);
 
 [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
 static extern IntPtr IntPtr_objc_msgSend(IntPtr receiver, IntPtr selector);
 
-[DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
-static extern void void_objc_msgSend_CGSize(IntPtr receiver, IntPtr selector, CoreGraphics.CGSize size);
-
 [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend_stret")]
 static extern void CGSize_objc_msgSend_stret(out CoreGraphics.CGSize retval, IntPtr receiver, IntPtr selector);
 
 [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
-static extern nfloat nfloat_objc_msgSend(IntPtr receiver, IntPtr selector);
+static extern void void_objc_msgSend_CGRect(IntPtr receiver, IntPtr selector, CoreGraphics.CGRect rect);
 
 protected override void OnAppearing()
 {
 base.OnAppearing();
-Dispatcher.DispatchDelayed(TimeSpan.FromSeconds(2), () =>
+Dispatcher.DispatchDelayed(TimeSpan.FromSeconds(3), () =>
 {
 try
 {
 var diag = new System.Text.StringBuilder();
-
 var handler = riveView.Handler as Plugin.Maui.Rive.RiveAnimationViewHandler;
-if (handler?.PlatformView != null)
-{
+if (handler?.PlatformView == null) { diagLabel.Text = "No PV"; return; }
+
 var pv = handler.PlatformView;
 var h = pv.Handle;
 
-// Read initial state
-var pausedSel = ObjCRuntime.Selector.GetHandle("isPaused");
-var drawSizeSel = ObjCRuntime.Selector.GetHandle("drawableSize");
+diag.AppendLine($"frame={pv.Frame.Width:F0}x{pv.Frame.Height:F0} bounds={pv.Bounds.Width:F0}x{pv.Bounds.Height:F0}");
+diag.AppendLine($"window={pv.Window != null} scale={pv.ContentScaleFactor}");
+
 var esnSel = ObjCRuntime.Selector.GetHandle("enableSetNeedsDisplay");
-var deviceSel = ObjCRuntime.Selector.GetHandle("device");
-
-var paused = bool_objc_msgSend(h, pausedSel);
-CGSize_objc_msgSend_stret(out var drawSize, h, drawSizeSel);
 var esn = bool_objc_msgSend(h, esnSel);
-var dev = IntPtr_objc_msgSend(h, deviceSel);
 
-diag.AppendLine($"Before: paused={paused} draw={drawSize.Width:F0}x{drawSize.Height:F0}");
-diag.AppendLine($"esn={esn} dev={dev != IntPtr.Zero} frame={pv.Frame.Width:F0}x{pv.Frame.Height:F0}");
+var drawSizeSel = ObjCRuntime.Selector.GetHandle("drawableSize");
+CGSize_objc_msgSend_stret(out var drawSize, h, drawSizeSel);
 
-// Force proper MTKView configuration
-var setEnableSel = ObjCRuntime.Selector.GetHandle("setEnableSetNeedsDisplay:");
-void_objc_msgSend_bool(h, setEnableSel, true);
+var pausedSel = ObjCRuntime.Selector.GetHandle("isPaused");
+var paused = bool_objc_msgSend(h, pausedSel);
 
-var setPausedSel = ObjCRuntime.Selector.GetHandle("setPaused:");
-void_objc_msgSend_bool(h, setPausedSel, false);
+var autoResizeSel = ObjCRuntime.Selector.GetHandle("autoResizeDrawable");
+var autoResize = bool_objc_msgSend(h, autoResizeSel);
 
-var scale = pv.ContentScaleFactor;
-var setDrawSel = ObjCRuntime.Selector.GetHandle("setDrawableSize:");
-void_objc_msgSend_CGSize(h, setDrawSel, new CoreGraphics.CGSize(pv.Frame.Width * scale, pv.Frame.Height * scale));
+diag.AppendLine($"esn={esn} draw={drawSize.Width:F0}x{drawSize.Height:F0}");
+diag.AppendLine($"paused={paused} autoResize={autoResize}");
 
-pv.SetNeedsDisplay();
+// Check if currentDrawable exists
+var drawableSel = ObjCRuntime.Selector.GetHandle("currentDrawable");
+var drawable = IntPtr_objc_msgSend(h, drawableSel);
+diag.AppendLine($"drawable={drawable != IntPtr.Zero}");
 
-// Read after
-paused = bool_objc_msgSend(h, pausedSel);
-CGSize_objc_msgSend_stret(out drawSize, h, drawSizeSel);
-esn = bool_objc_msgSend(h, esnSel);
+// Try manually calling drawRect:
+var drawRectSel = ObjCRuntime.Selector.GetHandle("drawRect:");
+void_objc_msgSend_CGRect(h, drawRectSel, pv.Bounds);
+diag.AppendLine("Called drawRect manually");
 
-diag.AppendLine($"After: paused={paused} draw={drawSize.Width:F0}x{drawSize.Height:F0} esn={esn}");
-}
+// Check again
+CGSize_objc_msgSend_stret(out var drawSize2, h, drawSizeSel);
+var esn2 = bool_objc_msgSend(h, esnSel);
+diag.AppendLine($"After: draw={drawSize2.Width:F0}x{drawSize2.Height:F0} esn={esn2}");
 
 diagLabel.Text = diag.ToString();
 }
 catch (Exception ex)
 {
-diagLabel.Text = $"Error: {ex.Message}";
+diagLabel.Text = $"Error: {ex.Message}\n{ex.StackTrace?.Substring(0, Math.Min(200, ex.StackTrace?.Length ?? 0))}";
 }
 });
 }

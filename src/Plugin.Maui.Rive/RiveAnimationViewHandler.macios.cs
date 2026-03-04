@@ -1,7 +1,9 @@
 using System.Runtime.InteropServices;
+using CoreAnimation;
 using CoreGraphics;
 using Microsoft.Maui.Handlers;
 using Foundation;
+using Metal;
 using RiveRuntime;
 using UIKit;
 
@@ -17,6 +19,9 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
     static extern void void_objc_msgSend_CGSize(IntPtr receiver, IntPtr selector, CGSize size);
+
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    static extern IntPtr IntPtr_objc_msgSend(IntPtr receiver, IntPtr selector);
 
     protected override UIView CreatePlatformView()
     {
@@ -69,41 +74,56 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     protected override void ConnectHandler(UIView platformView)
     {
         base.ConnectHandler(platformView);
-
-        // After the view is connected, ensure rendering is started
-        if (_riveView != null && _viewModel != null)
+        if (_riveView != null)
         {
-            // Defer to ensure view is in the window
-            platformView.PerformSelector(new ObjCRuntime.Selector("setNeedsLayout"), null, 0.1);
-            NSTimer.CreateScheduledTimer(0.5, false, _ => EnsureRendering());
+            // Defer to ensure view is in the window with a valid frame
+            NSTimer.CreateScheduledTimer(0.3, false, _ => KickstartRendering());
         }
     }
 
-    private void EnsureRendering()
+    private void KickstartRendering()
     {
         if (_riveView == null || _viewModel == null) return;
 
         var h = _riveView.Handle;
         var frame = _riveView.Frame;
-        
-        if (frame.Width > 0 && frame.Height > 0)
+        if (frame.Width <= 0 || frame.Height <= 0)
         {
-            // Ensure MTKView is properly configured for rendering
-            var setEnableSel = ObjCRuntime.Selector.GetHandle("setEnableSetNeedsDisplay:");
-            void_objc_msgSend_bool(h, setEnableSel, true);
-
-            var setPausedSel = ObjCRuntime.Selector.GetHandle("setPaused:");
-            void_objc_msgSend_bool(h, setPausedSel, false);
-
-            var scale = _riveView.ContentScaleFactor;
-            var setDrawSel = ObjCRuntime.Selector.GetHandle("setDrawableSize:");
-            void_objc_msgSend_CGSize(h, setDrawSel, new CGSize(frame.Width * scale, frame.Height * scale));
-
-            _riveView.SetNeedsDisplay();
-            
-            // Explicitly trigger play
-            _viewModel.Play(null, RiveRuntime.RiveLoop.AutoLoop, RiveRuntime.RiveDirection.AutoDirection);
+            // Try again later if frame not set yet
+            NSTimer.CreateScheduledTimer(0.5, false, _ => KickstartRendering());
+            return;
         }
+
+        // The Rive SDK's RiveRendererView.isPaused always returns true, 
+        // and enableSetNeedsDisplay starts as false. This means the first
+        // frame is never drawn through MTKView's normal path.
+        // We force the initial render by:
+        // 1. Setting enableSetNeedsDisplay = true
+        // 2. Setting the drawable size on the Metal layer
+        // 3. Calling setNeedsDisplay to trigger drawRect:
+
+        var setEnableSel = ObjCRuntime.Selector.GetHandle("setEnableSetNeedsDisplay:");
+        void_objc_msgSend_bool(h, setEnableSel, true);
+
+        // Set drawable size on the CAMetalLayer directly
+        var scale = _riveView.ContentScaleFactor;
+        var drawableSize = new CGSize(frame.Width * scale, frame.Height * scale);
+        
+        var setDrawSel = ObjCRuntime.Selector.GetHandle("setDrawableSize:");
+        void_objc_msgSend_CGSize(h, setDrawSel, drawableSize);
+
+        // Also set on the layer directly
+        if (_riveView.Layer is CAMetalLayer metalLayer)
+        {
+            metalLayer.DrawableSize = drawableSize;
+        }
+
+        // Force a display
+        _riveView.SetNeedsDisplay();
+        
+        // Also restart the Rive play loop to ensure the CADisplayLink is connected
+        _viewModel.Stop();
+        _viewModel.Play(null, RiveRuntime.RiveLoop.AutoLoop, RiveRuntime.RiveDirection.AutoDirection);
     }
 
     protected override void DisconnectHandler(UIView platformView)

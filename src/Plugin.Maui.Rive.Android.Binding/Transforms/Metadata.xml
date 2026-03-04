@@ -72,7 +72,7 @@
   <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='Listeners']" />
   <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='Helpers']" />
   <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='Renderer']" />
-  <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='RendererType']" />
+  <!-- Keep RendererType - needed for Rive.init() -->
   <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='ResourceType']" />
   <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='DrawKey']" />
   <remove-node path="/api/package[@name='app.rive.runtime.kotlin.core']/class[@name='EventType']" />

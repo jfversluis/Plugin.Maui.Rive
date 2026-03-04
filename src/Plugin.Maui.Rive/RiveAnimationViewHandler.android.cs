@@ -9,8 +9,32 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 {
     private global::App.Rive.Runtime.Kotlin.RiveAnimationView? _riveView;
 
+    private static bool _riveInitialized;
+
+    private static void EnsureRiveInitialized(global::Android.Content.Context context)
+    {
+        if (_riveInitialized) return;
+        
+        // Call Rive.init(context) via JNI since the RendererType binding has issues
+        var riveClass = Java.Lang.Class.ForName("app.rive.runtime.kotlin.core.Rive");
+        var instanceField = riveClass.GetField("INSTANCE");
+        var riveInstance = instanceField.Get(null)!;
+        
+        var rendererTypeClass = Java.Lang.Class.ForName("app.rive.runtime.kotlin.core.RendererType");
+        var riveField = rendererTypeClass.GetField("Rive");
+        var riveRenderer = riveField.Get(null)!;
+        
+        var initMethod = riveInstance.Class.GetMethod("init", 
+            Java.Lang.Class.FromType(typeof(global::Android.Content.Context)),
+            rendererTypeClass);
+        initMethod.Invoke(riveInstance, context, riveRenderer);
+        
+        _riveInitialized = true;
+    }
+
     protected override global::Android.Views.View CreatePlatformView()
     {
+        EnsureRiveInitialized(Context);
         _riveView = new global::App.Rive.Runtime.Kotlin.RiveAnimationView(Context, null);
         return _riveView;
     }
@@ -50,14 +74,13 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
                         virtualView.AnimationName,
                         virtualView.StateMachineName,
                         virtualView.AutoPlay,
-                        true,
+                        false,
                         fit,
                         alignment,
                         loop);
                 }
                 else
                 {
-                    // Try loading from assets as bytes
                     LoadFromAssets(riveView, virtualView, fit, alignment, loop);
                 }
             }
@@ -87,7 +110,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
                 virtualView.AnimationName,
                 virtualView.StateMachineName,
                 virtualView.AutoPlay,
-                true,
+                false,
                 fit,
                 alignment,
                 loop);
