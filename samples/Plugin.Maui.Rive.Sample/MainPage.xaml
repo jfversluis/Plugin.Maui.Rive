@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:rive="clr-namespace:Plugin.Maui.Rive;assembly=Plugin.Maui.Rive"
+             x:Class="Plugin.Maui.Rive.Sample.MainPage"
+             Title="Rive Animation Demo">
+
+    <Grid RowDefinitions="*, Auto" Padding="20">
+        <rive:RiveAnimationView 
+            x:Name="riveView"
+            ResourceName="vehicles"
+            AutoPlay="True"
+            Fit="Contain"
+            HeightRequest="400"
+            WidthRequest="400"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill"
+            AutomationId="RiveAnimationView" />
+
+        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="Center" Spacing="10" Margin="0,20,0,0">
+            <Button Text="Play" Clicked="OnPlayClicked" AutomationId="PlayButton" />
+            <Button Text="Pause" Clicked="OnPauseClicked" AutomationId="PauseButton" />
+            <Button Text="Stop" Clicked="OnStopClicked" AutomationId="StopButton" />
+            <Button Text="Reset" Clicked="OnResetClicked" AutomationId="ResetButton" />
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage>

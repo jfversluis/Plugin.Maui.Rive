@@ -1,6 +1,6 @@
-# Plugin.Maui.Feature Template
+# Plugin.Maui.Rive Template
 
-The `Plugin.Maui.Feature` repository is a template repository that can be used to bootstrap your own .NET MAUI plugin project. You can use this project structure as a blueprint for your own work.
+The `Plugin.Maui.Rive` repository is a template repository that can be used to bootstrap your own .NET MAUI plugin project. You can use this project structure as a blueprint for your own work.
 
 Learn how to get started with your plugin in this [YouTube video](https://www.youtube.com/watch?v=ZCQrlGT7MhI&list=PLfbOp004UaYVgzmTBNVI0ql2qF0LhSEU1&index=27).
 
@@ -8,7 +8,7 @@ This template contains:
 
 - A [sample .NET MAUI app](samples) where you can demonstrate how your plugin works and test your plugin with while developing
 - The [source](src) of the plugin
-- A boilerplate [README file](README_Feature.md) you can use (don't forget to rename to `README.md` and remove this one!)
+- A boilerplate [README file](README_Rive.md) you can use (don't forget to rename to `README.md` and remove this one!)
 - [GitHub Actions for CI](.github/workflows) of the library and the sample app
 - [GitHub Action for releasing](.github/workflows) your package to NuGet
 - A [generic icon](nuget.png) for your project, feel free to adapt and be creative!
@@ -18,13 +18,13 @@ This template contains:
 
 1. Create your own GitHub repository from this one by clicking the "Use this template" button and then "Create a new repository". More information in the [documentation](https://docs.github.com/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template). After that, clone the repo to your local machine.
 
-2. Replace all occurrences of `Plugin.Maui.Feature` with whatever your feature or functionality will be. For instance: `Plugin.Maui.ScreenBrightness` or `Plugin.Maui.Audio`. Of course the name can be anything, but to make it more discoverable it could be a great choice to stick to this naming scheme. You can easily do this with your favorite text-editor and do a replace all on all files.
+2. Replace all occurrences of `Plugin.Maui.Rive` with whatever your feature or functionality will be. For instance: `Plugin.Maui.ScreenBrightness` or `Plugin.Maui.Audio`. Of course the name can be anything, but to make it more discoverable it could be a great choice to stick to this naming scheme. You can easily do this with your favorite text-editor and do a replace all on all files.
 
    2.1 Don't forget to also rename the files and folders on your filesystem.
 
 3. In the csproj file of the plugin project (under `src`), make sure that you replace all relevant values to your project. This means the author of this project, the description of the project, the target framework (.NET 7, 8 or something else). If you don't want to or can't support a certain platform, remove that target platform altogether.
 
-4. Delete this `README.md` file and rename `README_Feature.md` to `README.md`. Fill that README file with all the relevant details of your project.
+4. Delete this `README.md` file and rename `README_Rive.md` to `README.md`. Fill that README file with all the relevant details of your project.
 
 5. Check the LICENSE file if this reflects the license that you want to distribute your project under. At the very least add your name there and the current year we live in.
 
@@ -32,7 +32,7 @@ This template contains:
 
 7. Write your plugin code (under `src`) and add samples to the .NET MAUI sample app (under `samples` folder)
 
-8. Make super sure that your package won't show up as `Plugin.Maui.Feature` on NuGet! If one does, you owe me a drink!
+8. Make super sure that your package won't show up as `Plugin.Maui.Rive` on NuGet! If one does, you owe me a drink!
 
 9. Publish your package to NuGet, a nice guide to do that can be found [here](https://learn.microsoft.com/nuget/nuget-org/publish-a-package). Also see [Publish to NuGet](#publish-to-nuget) below.
 

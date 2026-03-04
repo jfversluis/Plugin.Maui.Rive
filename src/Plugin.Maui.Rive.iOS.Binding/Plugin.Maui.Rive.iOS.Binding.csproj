@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-ios</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsBindingProject>true</IsBindingProject>
+    <SupportedOSPlatformVersion>14.0</SupportedOSPlatformVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <NativeReference Include="..\..\native\ios\RiveRuntime.xcframework">
+      <Kind>Framework</Kind>
+      <SmartLink>false</SmartLink>
+      <ForceLoad>true</ForceLoad>
+      <Frameworks>Metal MetalKit AudioToolbox CoreAudio AVFoundation CoreGraphics CoreText QuartzCore UIKit ImageIO CoreFoundation</Frameworks>
+      <LinkerFlags>-lc++ -lswiftCore -lswiftCoreFoundation -lswiftDarwin -lswiftDispatch -lswiftMetal -lswiftMetalKit -lswiftObjectiveC -lswiftOSLog</LinkerFlags>
+    </NativeReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ObjcBindingApiDefinition Include="ApiDefinition.cs" />
+    <ObjcBindingCoreSource Include="StructsAndEnums.cs" />
+  </ItemGroup>
+</Project>
