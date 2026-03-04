@@ -47,32 +47,15 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             if (_viewModel != null)
             {
                 _riveView = _viewModel.CreateRiveView();
-
-                // Wrap in a container to handle MAUI layout properly
-                var container = new UIView();
-                container.BackgroundColor = UIColor.Clear;
-
-                _riveView.TranslatesAutoresizingMaskIntoConstraints = false;
-                container.AddSubview(_riveView);
-
-                NSLayoutConstraint.ActivateConstraints(new[]
-                {
-                    _riveView.LeadingAnchor.ConstraintEqualTo(container.LeadingAnchor),
-                    _riveView.TrailingAnchor.ConstraintEqualTo(container.TrailingAnchor),
-                    _riveView.TopAnchor.ConstraintEqualTo(container.TopAnchor),
-                    _riveView.BottomAnchor.ConstraintEqualTo(container.BottomAnchor),
-                });
-
-                return container;
+                return _riveView;
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Plugin.Maui.Rive] Error: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Error: {ex}");
         }
 
-        var fallback = new UIView { BackgroundColor = UIColor.SystemRed };
-        return fallback;
+        return new UIView { BackgroundColor = UIColor.SystemRed };
     }
 
     protected override void DisconnectHandler(UIView platformView)
@@ -82,60 +65,6 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         _viewModel = null;
         _riveView = null;
         base.DisconnectHandler(platformView);
-    }
-
-    private void LoadRiveContent()
-    {
-        if (_riveView is null) return;
-
-        _viewModel?.DeregisterView();
-        _viewModel?.Dispose();
-        _viewModel = null;
-
-        var virtualView = VirtualView;
-        if (virtualView is null) return;
-
-        var fit = MapFitToNative(virtualView.Fit);
-        var alignment = MapAlignmentToNative(virtualView.RiveAlignment);
-
-        try
-        {
-            if (!string.IsNullOrEmpty(virtualView.Url))
-            {
-                _viewModel = new RiveViewModel(
-                    virtualView.Url!,
-                    virtualView.StateMachineName,
-                    fit,
-                    alignment,
-                    virtualView.AutoPlay,
-                    true,
-                    virtualView.ArtboardName);
-            }
-            else if (!string.IsNullOrEmpty(virtualView.ResourceName))
-            {
-                _viewModel = new RiveViewModel(
-                    virtualView.ResourceName!,
-                    "riv",
-                    NSBundle.MainBundle,
-                    virtualView.StateMachineName,
-                    fit,
-                    alignment,
-                    virtualView.AutoPlay,
-                    virtualView.ArtboardName,
-                    true,
-                    null);
-            }
-            else
-            {
-                return;
-            }
-
-            _viewModel.SetRiveView(_riveView);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[Plugin.Maui.Rive] Error loading Rive content: {ex}");
-        }
     }
 
     private static RiveRuntime.RiveFit MapFitToNative(RiveFitMode fit) => fit switch
@@ -165,15 +94,8 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         _ => RiveRuntime.RiveAlignment.Center,
     };
 
-    public static void MapResourceName(RiveAnimationViewHandler handler, IRiveAnimationView view)
-    {
-        handler.LoadRiveContent();
-    }
-
-    public static void MapUrl(RiveAnimationViewHandler handler, IRiveAnimationView view)
-    {
-        handler.LoadRiveContent();
-    }
+    public static void MapResourceName(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
+    public static void MapUrl(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
 
     public static void MapAutoPlay(RiveAnimationViewHandler handler, IRiveAnimationView view)
     {
