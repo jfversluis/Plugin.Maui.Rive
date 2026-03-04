@@ -267,18 +267,8 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         try
         {
-            var riveModel = _viewModel?.RiveModel;
-            if (riveModel == null) return [];
-
-            var riveFileSel = Selector.GetHandle("riveFile");
-            if (!riveModel.RespondsToSelector(new Selector("riveFile"))) return [];
-
-            var fileHandle = IntPtr_objc_msgSend(riveModel.Handle, riveFileSel);
-            if (fileHandle == IntPtr.Zero) return [];
-
-            var riveFile = ObjCRuntime.Runtime.GetNSObject<RiveFile>(fileHandle);
+            var riveFile = GetRiveFileForCurrentResource();
             if (riveFile == null) return [];
-
             var artboard = riveFile.GetArtboard(out _);
             return artboard?.AnimationNames ?? [];
         }
@@ -289,18 +279,8 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         try
         {
-            var riveModel = _viewModel?.RiveModel;
-            if (riveModel == null) return [];
-
-            var riveFileSel = Selector.GetHandle("riveFile");
-            if (!riveModel.RespondsToSelector(new Selector("riveFile"))) return [];
-
-            var fileHandle = IntPtr_objc_msgSend(riveModel.Handle, riveFileSel);
-            if (fileHandle == IntPtr.Zero) return [];
-
-            var riveFile = ObjCRuntime.Runtime.GetNSObject<RiveFile>(fileHandle);
+            var riveFile = GetRiveFileForCurrentResource();
             if (riveFile == null) return [];
-
             var artboard = riveFile.GetArtboard(out _);
             return artboard?.StateMachineNames ?? [];
         }
@@ -311,27 +291,47 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         try
         {
-            var riveModel = _viewModel?.RiveModel;
-            if (riveModel == null) return [];
-
-            var riveFileSel = Selector.GetHandle("riveFile");
-            if (!riveModel.RespondsToSelector(new Selector("riveFile"))) return [];
-
-            var fileHandle = IntPtr_objc_msgSend(riveModel.Handle, riveFileSel);
-            if (fileHandle == IntPtr.Zero) return [];
-
-            var riveFile = ObjCRuntime.Runtime.GetNSObject<RiveFile>(fileHandle);
+            var riveFile = GetRiveFileForCurrentResource();
             if (riveFile == null) return [];
-
             var artboard = riveFile.GetArtboard(out _);
-            var sm = artboard?.DefaultStateMachine;
-            return sm?.InputNames ?? [];
+            if (artboard == null) return [];
+
+            // Try the default state machine first
+            var sm = artboard.DefaultStateMachine;
+            if (sm != null)
+            {
+                var names = sm.InputNames;
+                if (names != null && names.Length > 0)
+                    return names;
+            }
+
+            // Fallback: try each state machine by index
+            var count = artboard.StateMachineCount;
+            for (nint i = 0; i < count; i++)
+            {
+                sm = artboard.StateMachineFromIndex(i, out _);
+                if (sm != null)
+                {
+                    var names = sm.InputNames;
+                    if (names != null && names.Length > 0)
+                        return names;
+                }
+            }
+            return [];
         }
         catch { return []; }
     }
 
-    [System.Runtime.InteropServices.DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
-    static extern IntPtr IntPtr_objc_msgSend(IntPtr receiver, IntPtr selector);
+    private RiveFile? GetRiveFileForCurrentResource()
+    {
+        var resourceName = VirtualView?.ResourceName;
+        if (string.IsNullOrEmpty(resourceName)) return null;
+        try
+        {
+            return new RiveFile(resourceName!, true, out _);
+        }
+        catch { return null; }
+    }
 
     // --- Mapping helpers ---
 

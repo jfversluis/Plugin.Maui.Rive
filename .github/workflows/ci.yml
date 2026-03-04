@@ -9,7 +9,7 @@ on:
     branches: [ "main" ]
 
 env:
-  DOTNET_VERSION: '9.0.x' # The .NET SDK version to use
+  DOTNET_VERSION: '10.0.x'
 
 jobs:
   build-plugin-ci:
@@ -25,7 +25,11 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
     - name: Install .NET MAUI Workload
-      run: dotnet workload restore samples\Plugin.Maui.Rive.Sample.sln
+      run: dotnet workload restore src\Plugin.Maui.Rive.sln
+
+    - name: Download native dependencies
+      shell: bash
+      run: ./download-native-deps.sh
 
     - name: Build
       run: dotnet build src\Plugin.Maui.Rive.sln -c Release

@@ -188,6 +188,14 @@ namespace RiveRuntime
     [BaseType(typeof(NSObject), Name = "_TtC11RiveRuntime9RiveModel")]
     interface RiveModel
     {
+        [Export("riveFile")]
+        RiveFile RiveFile { get; }
+
+        [NullAllowed, Export("artboard")]
+        RiveArtboard Artboard { get; }
+
+        [NullAllowed, Export("stateMachine")]
+        RiveStateMachineInstance StateMachine { get; }
     }
 
     // @protocol RivePlayerDelegate

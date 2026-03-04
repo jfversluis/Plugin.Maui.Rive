@@ -7,7 +7,7 @@ on:
     - "v[0-9]+.[0-9]+.[0-9]+-preview[0-9]+"
 
 env:
-  DOTNET_VERSION: '9.0.x' # The .NET SDK version to use
+  DOTNET_VERSION: '10.0.x'
 
 jobs:
   release-nuget:
@@ -23,7 +23,11 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Install .NET MAUI Workload
-        run: dotnet workload restore samples\Plugin.Maui.Rive.Sample.sln
+        run: dotnet workload restore src\Plugin.Maui.Rive.sln
+
+      - name: Download native dependencies
+        shell: bash
+        run: ./download-native-deps.sh
 
       - name: Verify commit exists in origin/main
         run: |
