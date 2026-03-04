@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:rive="clr-namespace:Plugin.Maui.Rive;assembly=Plugin.Maui.Rive"
+             x:Class="Plugin.Maui.Rive.Sample.IntrospectionPage"
+             Title="Introspection">
+
+    <ScrollView>
+        <Grid RowDefinitions="250, Auto, Auto, Auto" Padding="16" RowSpacing="12">
+
+            <rive:RiveAnimationView
+                x:Name="riveView"
+                ResourceName="vehicles"
+                AutoPlay="True"
+                Fit="Contain"
+                HeightRequest="250"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill" />
+
+            <!-- Animation selector -->
+            <HorizontalStackLayout Grid.Row="1" HorizontalOptions="Center" Spacing="8">
+                <Button Text="Vehicles" Clicked="OnVehiclesClicked" />
+                <Button Text="Skills" Clicked="OnSkillsClicked" />
+                <Button Text="Bear" Clicked="OnBearClicked" />
+                <Button Text="Explorer" Clicked="OnExplorerClicked" />
+            </HorizontalStackLayout>
+
+            <!-- Query Buttons -->
+            <HorizontalStackLayout Grid.Row="2" HorizontalOptions="Center" Spacing="8">
+                <Button Text="Query All" Clicked="OnQueryAllClicked" FontAttributes="Bold" />
+                <Button Text="IsPlaying?" Clicked="OnIsPlayingClicked" />
+            </HorizontalStackLayout>
+
+            <!-- Results -->
+            <Frame Grid.Row="3" BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#1E1E1E}" Padding="12" CornerRadius="8">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Introspection Results:" FontAttributes="Bold" FontSize="14" />
+
+                    <Label Text="Artboard Names:" FontAttributes="Bold" FontSize="12" />
+                    <Label x:Name="artboardNamesLabel" FontSize="11" Text="(tap Query All)" TextColor="Gray" />
+
+                    <Label Text="Animation Names:" FontAttributes="Bold" FontSize="12" />
+                    <Label x:Name="animationNamesLabel" FontSize="11" Text="—" TextColor="Gray" />
+
+                    <Label Text="State Machine Names:" FontAttributes="Bold" FontSize="12" />
+                    <Label x:Name="stateMachineNamesLabel" FontSize="11" Text="—" TextColor="Gray" />
+
+                    <Label Text="Input Names:" FontAttributes="Bold" FontSize="12" />
+                    <Label x:Name="inputNamesLabel" FontSize="11" Text="—" TextColor="Gray" />
+
+                    <Label x:Name="isPlayingLabel" FontSize="12" Text="" />
+                </VerticalStackLayout>
+            </Frame>
+
+        </Grid>
+    </ScrollView>
+</ContentPage>

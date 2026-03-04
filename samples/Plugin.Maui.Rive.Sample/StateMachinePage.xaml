@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:rive="clr-namespace:Plugin.Maui.Rive;assembly=Plugin.Maui.Rive"
+             x:Class="Plugin.Maui.Rive.Sample.StateMachinePage"
+             Title="State Machine">
+
+    <ScrollView>
+        <Grid RowDefinitions="350, Auto, Auto, Auto, Auto" Padding="16" RowSpacing="12">
+
+            <rive:RiveAnimationView
+                x:Name="riveView"
+                ResourceName="skills"
+                AutoPlay="True"
+                Fit="Contain"
+                HeightRequest="350"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill" />
+
+            <!-- Animation selector -->
+            <HorizontalStackLayout Grid.Row="1" HorizontalOptions="Center" Spacing="8">
+                <Label Text="File:" VerticalOptions="Center" FontAttributes="Bold" />
+                <Button Text="Skills" Clicked="OnSkillsClicked" />
+                <Button Text="Off Road" Clicked="OnOffRoadClicked" />
+                <Button Text="Bear" Clicked="OnBearClicked" />
+            </HorizontalStackLayout>
+
+            <!-- Trigger Inputs -->
+            <VerticalStackLayout Grid.Row="2" Spacing="4">
+                <Label Text="Trigger Inputs:" FontAttributes="Bold" />
+                <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                    <Entry x:Name="triggerEntry" Placeholder="Trigger name" WidthRequest="200" />
+                    <Button Text="Fire!" Clicked="OnFireTriggerClicked" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+            <!-- Bool & Number Inputs -->
+            <Grid Grid.Row="3" ColumnDefinitions="*, *" ColumnSpacing="12">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Boolean Input:" FontAttributes="Bold" />
+                    <Entry x:Name="boolNameEntry" Placeholder="Input name" />
+                    <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                        <Button Text="Set True" Clicked="OnSetBoolTrueClicked" />
+                        <Button Text="Set False" Clicked="OnSetBoolFalseClicked" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="4">
+                    <Label Text="Number Input:" FontAttributes="Bold" />
+                    <Entry x:Name="numberNameEntry" Placeholder="Input name" />
+                    <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                        <Slider x:Name="numberSlider" Minimum="0" Maximum="100" Value="50"
+                                ValueChanged="OnNumberSliderChanged" />
+                    </HorizontalStackLayout>
+                    <Label x:Name="numberValueLabel" Text="Value: 50" HorizontalOptions="Center" FontSize="11" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- Event Log -->
+            <Frame Grid.Row="4" BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#1E1E1E}" Padding="10" CornerRadius="8">
+                <VerticalStackLayout>
+                    <Label Text="State Machine Events:" FontAttributes="Bold" />
+                    <Label x:Name="logLabel" FontSize="11" MaxLines="6" Text="Interact with inputs above..." />
+                </VerticalStackLayout>
+            </Frame>
+
+        </Grid>
+    </ScrollView>
+</ContentPage>

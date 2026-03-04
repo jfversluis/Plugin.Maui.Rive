@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:rive="clr-namespace:Plugin.Maui.Rive;assembly=Plugin.Maui.Rive"
+             x:Class="Plugin.Maui.Rive.Sample.FitAlignmentPage"
+             Title="Fit &amp; Alignment">
+
+    <ScrollView>
+        <Grid RowDefinitions="300, Auto, Auto, Auto, Auto" Padding="16" RowSpacing="12">
+
+            <Border StrokeThickness="2" Stroke="Gray" StrokeDashArray="4,2">
+                <rive:RiveAnimationView
+                    x:Name="riveView"
+                    ResourceName="vehicles"
+                    AutoPlay="True"
+                    Fit="Contain"
+                    RiveAlignment="Center"
+                    HeightRequest="300"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Fill" />
+            </Border>
+
+            <!-- Fit Mode -->
+            <VerticalStackLayout Grid.Row="1" Spacing="4">
+                <Label Text="Fit Mode:" FontAttributes="Bold" />
+                <FlexLayout Wrap="Wrap" JustifyContent="Center" AlignItems="Center">
+                    <Button Text="Fill" Clicked="OnFitClicked" Margin="2" />
+                    <Button Text="Contain" Clicked="OnFitClicked" Margin="2" />
+                    <Button Text="Cover" Clicked="OnFitClicked" Margin="2" />
+                    <Button Text="FitWidth" Clicked="OnFitClicked" Margin="2" />
+                    <Button Text="FitHeight" Clicked="OnFitClicked" Margin="2" />
+                    <Button Text="ScaleDown" Clicked="OnFitClicked" Margin="2" />
+                    <Button Text="NoFit" Clicked="OnFitClicked" Margin="2" />
+                    <Button Text="Layout" Clicked="OnFitClicked" Margin="2" />
+                </FlexLayout>
+            </VerticalStackLayout>
+
+            <!-- Alignment -->
+            <VerticalStackLayout Grid.Row="2" Spacing="4">
+                <Label Text="Alignment:" FontAttributes="Bold" />
+                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="4" RowSpacing="4"
+                      HorizontalOptions="Center" WidthRequest="300">
+                    <Button Text="↖ TL" Grid.Row="0" Grid.Column="0" Clicked="OnAlignClicked" CommandParameter="TopLeft" />
+                    <Button Text="↑ TC" Grid.Row="0" Grid.Column="1" Clicked="OnAlignClicked" CommandParameter="TopCenter" />
+                    <Button Text="↗ TR" Grid.Row="0" Grid.Column="2" Clicked="OnAlignClicked" CommandParameter="TopRight" />
+                    <Button Text="← CL" Grid.Row="1" Grid.Column="0" Clicked="OnAlignClicked" CommandParameter="CenterLeft" />
+                    <Button Text="● C" Grid.Row="1" Grid.Column="1" Clicked="OnAlignClicked" CommandParameter="Center" />
+                    <Button Text="→ CR" Grid.Row="1" Grid.Column="2" Clicked="OnAlignClicked" CommandParameter="CenterRight" />
+                    <Button Text="↙ BL" Grid.Row="2" Grid.Column="0" Clicked="OnAlignClicked" CommandParameter="BottomLeft" />
+                    <Button Text="↓ BC" Grid.Row="2" Grid.Column="1" Clicked="OnAlignClicked" CommandParameter="BottomCenter" />
+                    <Button Text="↘ BR" Grid.Row="2" Grid.Column="2" Clicked="OnAlignClicked" CommandParameter="BottomRight" />
+                </Grid>
+            </VerticalStackLayout>
+
+            <!-- Current settings -->
+            <Frame Grid.Row="3" BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#1E1E1E}" Padding="10" CornerRadius="8">
+                <Label x:Name="settingsLabel" FontSize="13"
+                       Text="Fit: Contain | Alignment: Center" HorizontalOptions="Center" />
+            </Frame>
+
+            <!-- Layout Scale Factor -->
+            <VerticalStackLayout Grid.Row="4" Spacing="4">
+                <Label Text="Layout Scale Factor (for Fit=Layout):" FontAttributes="Bold" />
+                <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                    <Slider x:Name="scaleSlider" Minimum="0.5" Maximum="3.0" Value="1.0"
+                            WidthRequest="250" ValueChanged="OnScaleChanged" />
+                    <Label x:Name="scaleLabel" Text="1.0x" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+        </Grid>
+    </ScrollView>
+</ContentPage>
