@@ -50,9 +50,19 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
             if (_viewModel != null)
             {
+                // Create a container UIView and embed the RiveView inside with autolayout
                 _riveView = _viewModel.CreateRiveView();
-                _riveView.ClipsToBounds = true;
-                return _riveView;
+                var container = new UIView();
+                container.AddSubview(_riveView);
+                _riveView.TranslatesAutoresizingMaskIntoConstraints = false;
+                NSLayoutConstraint.ActivateConstraints(new[]
+                {
+                    _riveView.LeadingAnchor.ConstraintEqualTo(container.LeadingAnchor),
+                    _riveView.TrailingAnchor.ConstraintEqualTo(container.TrailingAnchor),
+                    _riveView.TopAnchor.ConstraintEqualTo(container.TopAnchor),
+                    _riveView.BottomAnchor.ConstraintEqualTo(container.BottomAnchor),
+                });
+                return container;
             }
         }
         catch (Exception ex)

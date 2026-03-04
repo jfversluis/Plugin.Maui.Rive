@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-RIVE_IOS_VERSION="6.15.2"
+RIVE_IOS_VERSION="6.16.0"
 RIVE_ANDROID_VERSION="11.2.1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

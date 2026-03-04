@@ -22,7 +22,7 @@ The native Rive SDKs are too large for git. Run the download script first:
 ```
 
 This downloads:
-- **iOS**: `RiveRuntime.xcframework` v6.15.2 (~90MB)
+- **iOS**: `RiveRuntime.xcframework` v6.16.0 (~90MB)
 - **Android**: `rive-android` v11.2.1 AAR (~10MB)
 
 ### 2. Register Rive in MauiProgram.cs
