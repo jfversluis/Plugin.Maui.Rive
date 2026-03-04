@@ -108,7 +108,7 @@ riveView.SetTextRunValueAtPath("textRunName", "new value", "path");
 byte[] riveBytes = File.ReadAllBytes("animation.riv");
 riveView.SetRiveBytes(riveBytes, artboardName: "MyArtboard");
 
-// Introspection (iOS: full support, Android: artboard name only)
+// Introspection
 string[] artboards = riveView.GetArtboardNames();
 string[] animations = riveView.GetAnimationNames();
 string[] stateMachines = riveView.GetStateMachineNames();
@@ -158,7 +158,7 @@ dotnet build src/Plugin.Maui.Rive/Plugin.Maui.Rive.csproj
 
 ## Native SDK Versions
 
-- **iOS**: [RiveRuntime](https://github.com/rive-app/rive-ios) v6.15.2
+- **iOS**: [RiveRuntime](https://github.com/rive-app/rive-ios) v6.16.0
 - **Android**: [rive-android](https://github.com/rive-app/rive-android) v11.2.1
 
 ## License

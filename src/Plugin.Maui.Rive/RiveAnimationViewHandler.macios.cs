@@ -116,6 +116,47 @@ internal class RiveHostView : UIView
     }
 
     /// <summary>
+    /// Load new content from raw .riv bytes by writing to a temporary file.
+    /// </summary>
+    public void ReloadWithBytes(byte[] bytes, string? stateMachineName, string? artboardName,
+        bool autoPlay, RiveFit fit, RiveAlignment alignment)
+    {
+        TearDown();
+
+        try
+        {
+            var tempDir = NSFileManager.DefaultManager.GetTemporaryDirectory().Path!;
+            var tempFile = System.IO.Path.Combine(tempDir, $"rive_{Guid.NewGuid():N}.riv");
+            System.IO.File.WriteAllBytes(tempFile, bytes);
+
+            var fileUrl = NSUrl.FromFilename(tempFile);
+            _viewModel = new RiveViewModel(
+                fileUrl!.AbsoluteString!,
+                stateMachineName,
+                fit,
+                alignment,
+                autoPlay,
+                false,
+                artboardName);
+
+            _riveView = _viewModel.CreateRiveView();
+            _riveView.Frame = Bounds;
+            AddSubview(_riveView);
+            _isSetUp = true;
+
+            // Clean up temp file after load
+            NSTimer.CreateScheduledTimer(5.0, false, _ =>
+            {
+                try { System.IO.File.Delete(tempFile); } catch { }
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] ReloadWithBytes error: {ex}");
+        }
+    }
+
+    /// <summary>
     /// Recreate with new parameters (for dynamic resource changes).
     /// </summary>
     public void Reload(string? resourceName, string? url, string? stateMachineName, string? artboardName, bool autoPlay, RiveFit fit, RiveAlignment alignment)
@@ -200,6 +241,9 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         WireDelegatesWhenReady();
     }
 
+    private int _wireRetryCount;
+    private const int MaxWireRetries = 50; // 50 * 200ms = 10 seconds max
+
     private void WireDelegatesWhenReady()
     {
         if (_hostView?.IsSetUp == true && _viewModel != null)
@@ -207,9 +251,11 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             _stateMachineDelegate = new RiveStateMachineDelegateProxy(this);
             _playerDelegate = new RivePlayerDelegateProxy(this);
             SetDelegatesOnViewModel(_viewModel, _stateMachineDelegate, _playerDelegate);
+            _wireRetryCount = 0;
         }
-        else
+        else if (_wireRetryCount < MaxWireRetries && _hostView != null)
         {
+            _wireRetryCount++;
             NSTimer.CreateScheduledTimer(0.2, false, _ => WireDelegatesWhenReady());
         }
     }
@@ -252,6 +298,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     public partial string? GetTextRunValueAtPath(string textRunName, string path)
     {
+        // iOS binding does not expose path-based text run query; falls back to name-only
         return _viewModel?.GetTextRunValue(textRunName);
     }
 
@@ -267,7 +314,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         try
         {
-            var riveFile = GetRiveFileForCurrentResource();
+            using var riveFile = GetRiveFileForCurrentResource();
             if (riveFile == null) return [];
             var artboard = riveFile.GetArtboard(out _);
             return artboard?.AnimationNames ?? [];
@@ -279,7 +326,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         try
         {
-            var riveFile = GetRiveFileForCurrentResource();
+            using var riveFile = GetRiveFileForCurrentResource();
             if (riveFile == null) return [];
             var artboard = riveFile.GetArtboard(out _);
             return artboard?.StateMachineNames ?? [];
@@ -291,7 +338,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         try
         {
-            var riveFile = GetRiveFileForCurrentResource();
+            using var riveFile = GetRiveFileForCurrentResource();
             if (riveFile == null) return [];
             var artboard = riveFile.GetArtboard(out _);
             if (artboard == null) return [];
@@ -510,23 +557,20 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     public static void MapSetRiveBytes(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        if (args is RiveBytesArgs bytesArgs)
+        if (args is RiveBytesArgs bytesArgs && handler._hostView != null)
         {
             try
             {
-                var data = NSData.FromArray(bytesArgs.Bytes);
-                var riveFile = new RiveFile(data, true, out var error);
-                if (error != null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] SetRiveBytes error: {error}");
-                    return;
-                }
-
-                handler._viewModel?.ConfigureModel(
-                    bytesArgs.ArtboardName,
+                handler._hostView.ReloadWithBytes(
+                    bytesArgs.Bytes,
                     bytesArgs.StateMachineName,
-                    bytesArgs.AnimationName,
-                    out _);
+                    bytesArgs.ArtboardName,
+                    view.AutoPlay,
+                    MapFitToNative(view.Fit),
+                    MapAlignmentToNative(view.RiveAlignment));
+
+                handler._wireRetryCount = 0;
+                handler.WireDelegatesWhenReady();
             }
             catch (Exception ex)
             {

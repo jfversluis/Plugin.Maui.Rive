@@ -10,11 +10,11 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     private global::App.Rive.Runtime.Kotlin.RiveAnimationView? _riveView;
     private bool _contentLoaded;
 
-    private static bool _riveInitialized;
+    private static int _riveInitialized;
 
     private static void EnsureRiveInitialized(global::Android.Content.Context context)
     {
-        if (_riveInitialized) return;
+        if (Interlocked.CompareExchange(ref _riveInitialized, 1, 0) != 0) return;
 
         try
         {
@@ -30,11 +30,10 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
                 Java.Lang.Class.FromType(typeof(global::Android.Content.Context)),
                 rendererTypeClass);
             initMethod.Invoke(riveInstance, context, riveRenderer);
-
-            _riveInitialized = true;
         }
         catch (Exception ex)
         {
+            Interlocked.Exchange(ref _riveInitialized, 0);
             System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Rive init failed: {ex}");
         }
     }
@@ -54,6 +53,9 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     protected override void DisconnectHandler(global::Android.Views.View platformView)
     {
+        _riveView?.Reset();
+        _riveView = null;
+        _contentLoaded = false;
         base.DisconnectHandler(platformView);
     }
 
