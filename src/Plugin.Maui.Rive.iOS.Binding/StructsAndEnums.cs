@@ -70,4 +70,11 @@ namespace RiveRuntime
         Hit = 1,
         HitOpaque = 2
     }
+
+    [Native]
+    public enum RendererType : long
+    {
+        RiveRenderer = 0,
+        CgRenderer = 1
+    }
 }

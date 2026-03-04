@@ -1,9 +1,6 @@
-using System.Runtime.InteropServices;
-using CoreAnimation;
 using CoreGraphics;
 using Microsoft.Maui.Handlers;
 using Foundation;
-using Metal;
 using RiveRuntime;
 using UIKit;
 
@@ -13,15 +10,6 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 {
     private RiveViewModel? _viewModel;
     private RiveView? _riveView;
-
-    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
-    static extern void void_objc_msgSend_bool(IntPtr receiver, IntPtr selector, [MarshalAs(UnmanagedType.I1)] bool arg);
-
-    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
-    static extern void void_objc_msgSend_CGSize(IntPtr receiver, IntPtr selector, CGSize size);
-
-    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
-    static extern IntPtr IntPtr_objc_msgSend(IntPtr receiver, IntPtr selector);
 
     protected override UIView CreatePlatformView()
     {
@@ -60,6 +48,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             if (_viewModel != null)
             {
                 _riveView = _viewModel.CreateRiveView();
+                _riveView.ClipsToBounds = true;
                 return _riveView;
             }
         }
@@ -74,56 +63,17 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     protected override void ConnectHandler(UIView platformView)
     {
         base.ConnectHandler(platformView);
-        if (_riveView != null)
+
+        // After the view is in the MAUI hierarchy, restart playback to ensure
+        // the CADisplayLink connects to the correct window scene and frame draws work
+        if (_riveView != null && _viewModel != null)
         {
-            // Defer to ensure view is in the window with a valid frame
-            NSTimer.CreateScheduledTimer(0.3, false, _ => KickstartRendering());
+            NSTimer.CreateScheduledTimer(0.5, false, _ =>
+            {
+                _viewModel.Stop();
+                _viewModel.Play(null, RiveRuntime.RiveLoop.AutoLoop, RiveRuntime.RiveDirection.AutoDirection);
+            });
         }
-    }
-
-    private void KickstartRendering()
-    {
-        if (_riveView == null || _viewModel == null) return;
-
-        var h = _riveView.Handle;
-        var frame = _riveView.Frame;
-        if (frame.Width <= 0 || frame.Height <= 0)
-        {
-            // Try again later if frame not set yet
-            NSTimer.CreateScheduledTimer(0.5, false, _ => KickstartRendering());
-            return;
-        }
-
-        // The Rive SDK's RiveRendererView.isPaused always returns true, 
-        // and enableSetNeedsDisplay starts as false. This means the first
-        // frame is never drawn through MTKView's normal path.
-        // We force the initial render by:
-        // 1. Setting enableSetNeedsDisplay = true
-        // 2. Setting the drawable size on the Metal layer
-        // 3. Calling setNeedsDisplay to trigger drawRect:
-
-        var setEnableSel = ObjCRuntime.Selector.GetHandle("setEnableSetNeedsDisplay:");
-        void_objc_msgSend_bool(h, setEnableSel, true);
-
-        // Set drawable size on the CAMetalLayer directly
-        var scale = _riveView.ContentScaleFactor;
-        var drawableSize = new CGSize(frame.Width * scale, frame.Height * scale);
-        
-        var setDrawSel = ObjCRuntime.Selector.GetHandle("setDrawableSize:");
-        void_objc_msgSend_CGSize(h, setDrawSel, drawableSize);
-
-        // Also set on the layer directly
-        if (_riveView.Layer is CAMetalLayer metalLayer)
-        {
-            metalLayer.DrawableSize = drawableSize;
-        }
-
-        // Force a display
-        _riveView.SetNeedsDisplay();
-        
-        // Also restart the Rive play loop to ensure the CADisplayLink is connected
-        _viewModel.Stop();
-        _viewModel.Play(null, RiveRuntime.RiveLoop.AutoLoop, RiveRuntime.RiveDirection.AutoDirection);
     }
 
     protected override void DisconnectHandler(UIView platformView)

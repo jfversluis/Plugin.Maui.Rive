@@ -204,6 +204,20 @@ namespace RiveRuntime
     {
     }
 
+    // @interface RenderContextManager : NSObject
+    [BaseType(typeof(NSObject))]
+    interface RenderContextManager
+    {
+        [Static]
+        [Export("shared")]
+        RenderContextManager Shared { get; }
+
+        [Export("defaultRenderer", ArgumentSemantic.Assign)]
+        RendererType DefaultRenderer { get; set; }
+    }
+
+    // @interface RiveRenderer : NSObject (NOTE: removed from v6.15.2 binary)
+
     // @interface RiveRendererView : RiveMTKView
     [BaseType(typeof(UIView))]
     interface RiveRendererView
