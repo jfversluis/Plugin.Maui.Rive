@@ -90,7 +90,7 @@ namespace RiveSharp
         public void AddRenderPath(RenderPath path, Mat2D m)
         {
             var mat = new SKMatrix(m.X1, m.X2, m.Tx, m.Y1, m.Y2, m.Ty, 0, 0, 1);
-            SKPath.AddPath(path.SKPath, ref mat);
+            SKPath.AddPath(path.SKPath, in mat);
         }
         public FillRule FillRule { set { SKPath.FillType = ToSKPathFillType(value); } }
         public void MoveTo(float x, float y) { SKPath.MoveTo(x, y); }

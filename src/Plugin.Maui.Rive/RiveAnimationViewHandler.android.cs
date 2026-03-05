@@ -212,7 +212,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         if (result == null) return null;
 
         var list = new global::Android.Runtime.JavaList<string>(result.Handle, global::Android.Runtime.JniHandleOwnership.DoNotTransfer);
-        return [.. list];
+        return list.Where(s => s != null).ToArray()!;
     }
 
     // --- Content Loading ---
@@ -257,7 +257,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     }
 
     private void LoadFromAssets(global::App.Rive.Runtime.Kotlin.RiveAnimationView riveView, IRiveAnimationView virtualView,
-        Fit? fit, Alignment? alignment, Loop? loop)
+        Fit fit, Alignment alignment, Loop loop)
     {
         try
         {
@@ -279,7 +279,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     }
 
     private void LoadFromUrl(global::App.Rive.Runtime.Kotlin.RiveAnimationView riveView, IRiveAnimationView virtualView,
-        Fit? fit, Alignment? alignment, Loop? loop)
+        Fit fit, Alignment alignment, Loop loop)
     {
         System.Threading.Tasks.Task.Run(async () =>
         {
@@ -303,7 +303,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     // --- Mapping Helpers ---
 
-    private static Fit? MapFitToNative(RiveFitMode fit) => fit switch
+    private static Fit MapFitToNative(RiveFitMode fit) => fit switch
     {
         RiveFitMode.Fill => Fit.Fill,
         RiveFitMode.Contain => Fit.Contain,
@@ -316,7 +316,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         _ => Fit.Contain,
     };
 
-    private static Alignment? MapAlignmentToNative(RiveAlignmentMode alignment) => alignment switch
+    private static Alignment MapAlignmentToNative(RiveAlignmentMode alignment) => alignment switch
     {
         RiveAlignmentMode.TopLeft => Alignment.TopLeft,
         RiveAlignmentMode.TopCenter => Alignment.TopCenter,
@@ -330,7 +330,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         _ => Alignment.Center,
     };
 
-    private static Loop? MapLoopToNative(RiveLoopMode loop) => loop switch
+    private static Loop MapLoopToNative(RiveLoopMode loop) => loop switch
     {
         RiveLoopMode.OneShot => Loop.Oneshot,
         RiveLoopMode.Loop => Loop.LoopMode,
@@ -338,7 +338,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         _ => Loop.Auto,
     };
 
-    private static Direction? MapDirectionToNative(RiveDirectionMode dir) => dir switch
+    private static Direction MapDirectionToNative(RiveDirectionMode dir) => dir switch
     {
         RiveDirectionMode.Backwards => Direction.Backwards,
         RiveDirectionMode.Forwards => Direction.Forwards,
@@ -403,9 +403,9 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             var dir = MapDirectionToNative(playArgs.Direction);
 
             if (!string.IsNullOrEmpty(playArgs.AnimationName))
-                handler._riveView.Play(playArgs.AnimationName!, loop!, dir!, false, false);
+                handler._riveView.Play(playArgs.AnimationName!, loop, dir, false, false);
             else
-                handler._riveView.Play(loop!, dir!, false);
+                handler._riveView.Play(loop, dir, false);
         }
         else
         {

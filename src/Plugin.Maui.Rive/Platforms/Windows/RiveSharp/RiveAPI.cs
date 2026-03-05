@@ -101,7 +101,7 @@ namespace RiveSharp
         public static extern Single Scene_Height(IntPtr scene);
 
         [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Int32 Scene_Name(IntPtr scene, [Out] char[] charArray);
+        public static extern Int32 Scene_Name(IntPtr scene, [Out] char[]? charArray);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         public static extern Int32 Scene_Loop(IntPtr scene);
@@ -133,25 +133,25 @@ namespace RiveSharp
         public static extern Int32 Scene_ArtboardCount(IntPtr scene);
 
         [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Int32 Scene_ArtboardName(IntPtr scene, Int32 index, [Out] char[] charArray);
+        public static extern Int32 Scene_ArtboardName(IntPtr scene, Int32 index, [Out] char[]? charArray);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         public static extern Int32 Scene_AnimationCount(IntPtr scene);
 
         [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Int32 Scene_AnimationName(IntPtr scene, Int32 index, [Out] char[] charArray);
+        public static extern Int32 Scene_AnimationName(IntPtr scene, Int32 index, [Out] char[]? charArray);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         public static extern Int32 Scene_StateMachineCount(IntPtr scene);
 
         [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Int32 Scene_StateMachineName(IntPtr scene, Int32 index, [Out] char[] charArray);
+        public static extern Int32 Scene_StateMachineName(IntPtr scene, Int32 index, [Out] char[]? charArray);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         public static extern Int32 Scene_InputCount(IntPtr scene);
 
         [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Int32 Scene_InputName(IntPtr scene, Int32 index, [Out] char[] charArray);
+        public static extern Int32 Scene_InputName(IntPtr scene, Int32 index, [Out] char[]? charArray);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         public static extern Int32 Scene_InputType(IntPtr scene, Int32 index);
@@ -160,18 +160,18 @@ namespace RiveSharp
         public static extern Int32 Scene_StateChangedCount(IntPtr scene);
 
         [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Int32 Scene_StateChangedName(IntPtr scene, Int32 index, [Out] char[] charArray);
+        public static extern Int32 Scene_StateChangedName(IntPtr scene, Int32 index, [Out] char[]? charArray);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         public static extern Int32 Scene_ReportedEventCount(IntPtr scene);
 
         [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Int32 Scene_ReportedEventName(IntPtr scene, Int32 index, [Out] char[] charArray);
+        public static extern Int32 Scene_ReportedEventName(IntPtr scene, Int32 index, [Out] char[]? charArray);
 
         // --- Text runs ---
 
         [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Int32 Scene_GetTextRunValue(IntPtr scene, string name, string path, [Out] char[] charArray);
+        public static extern Int32 Scene_GetTextRunValue(IntPtr scene, string name, string path, [Out] char[]? charArray);
 
         [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern SByte Scene_SetTextRunValue(IntPtr scene, string name, string path, string value);
@@ -183,7 +183,7 @@ namespace RiveSharp
 
         public static T CastNativeRef<T>(IntPtr @ref)
         {
-            return (T)GCHandle.FromIntPtr(@ref).Target;
+            return (T)GCHandle.FromIntPtr(@ref).Target!;
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

@@ -89,7 +89,7 @@ namespace RiveSharp
         public void Transform(Mat2D m)
         {
             var mat = new SKMatrix(m.X1, m.X2, m.Tx, m.Y1, m.Y2, m.Ty, 0, 0, 1);
-            SKCanvas.Concat(ref mat);
+            SKCanvas.Concat(in mat);
         }
 
         public void DrawPath(RenderPath path, RenderPaint paint)

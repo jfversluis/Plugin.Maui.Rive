@@ -40,7 +40,7 @@ namespace RiveSharp
             return new RenderPaint();
         }
 
-        RenderImage DecodeImage(byte[] data)
+        RenderImage? DecodeImage(byte[] data)
         {
             return RenderImage.Decode(data);
         }
