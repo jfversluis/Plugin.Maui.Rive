@@ -105,39 +105,48 @@ public partial class StateMachinePage : ContentPage
                     FontSize = 13,
                     FontAttributes = FontAttributes.Bold
                 };
-                // Use 0-10 range with 0.5 steps — covers most Rive number inputs
-                var slider = new Slider { Minimum = 0, Maximum = 10, Value = 0 };
                 var numName = n.Name;
-                slider.ValueChanged += (_, args) =>
+
+                // Stepper with - and + buttons and a value display
+                var valueLabel = new Label
                 {
-                    var val = Math.Round(args.NewValue, 1);
-                    label.Text = $"{numName}: {val:F1}";
-                    riveView.SetNumberInput(numName, (float)val);
+                    Text = "0",
+                    FontSize = 18,
+                    FontAttributes = FontAttributes.Bold,
+                    HorizontalOptions = LayoutOptions.Center,
+                    VerticalOptions = LayoutOptions.Center,
+                    WidthRequest = 40,
+                    HorizontalTextAlignment = TextAlignment.Center
                 };
-                // Also add quick-set buttons for common integer values
-                var btnRow = new FlexLayout { Wrap = Microsoft.Maui.Layouts.FlexWrap.Wrap, JustifyContent = Microsoft.Maui.Layouts.FlexJustify.Start };
-                for (int i = 0; i <= 5; i++)
+                float currentValue = 0;
+
+                var minusBtn = new Button { Text = "−", FontSize = 18, WidthRequest = 44, HeightRequest = 44, Padding = 0 };
+                var plusBtn = new Button { Text = "+", FontSize = 18, WidthRequest = 44, HeightRequest = 44, Padding = 0 };
+
+                minusBtn.Clicked += (_, _) =>
                 {
-                    var val = i;
-                    var btn = new Button
-                    {
-                        Text = val.ToString(),
-                        FontSize = 12,
-                        Padding = new Thickness(10, 2),
-                        Margin = new Thickness(0, 0, 6, 4),
-                        HeightRequest = 32
-                    };
-                    btn.Clicked += (_, _) =>
-                    {
-                        slider.Value = val;
-                        riveView.SetNumberInput(numName, val);
-                        Log($"🔢 {numName} = {val}");
-                    };
-                    btnRow.Add(btn);
-                }
+                    currentValue = Math.Max(0, currentValue - 1);
+                    valueLabel.Text = currentValue.ToString("F0");
+                    label.Text = $"{numName}: {currentValue:F0}";
+                    riveView.SetNumberInput(numName, currentValue);
+                    Log($"🔢 {numName} = {currentValue:F0}");
+                };
+                plusBtn.Clicked += (_, _) =>
+                {
+                    currentValue += 1;
+                    valueLabel.Text = currentValue.ToString("F0");
+                    label.Text = $"{numName}: {currentValue:F0}";
+                    riveView.SetNumberInput(numName, currentValue);
+                    Log($"🔢 {numName} = {currentValue:F0}");
+                };
+
+                var stepperRow = new HorizontalStackLayout { Spacing = 8, HorizontalOptions = LayoutOptions.Start };
+                stepperRow.Add(minusBtn);
+                stepperRow.Add(valueLabel);
+                stepperRow.Add(plusBtn);
+
                 numbersContainer.Add(label);
-                numbersContainer.Add(slider);
-                numbersContainer.Add(btnRow);
+                numbersContainer.Add(stepperRow);
             }
         }
 
