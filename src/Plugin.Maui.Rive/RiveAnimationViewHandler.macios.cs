@@ -482,6 +482,8 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             view.StateMachineName, view.ArtboardName,
             view.AutoPlay,
             MapFitToNative(view.Fit), MapAlignmentToNative(view.RiveAlignment));
+        handler._wireRetryCount = 0;
+        handler.WireDelegatesWhenReady();
     }
 
     public static void MapUrl(RiveAnimationViewHandler handler, IRiveAnimationView view)
@@ -492,6 +494,8 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             view.StateMachineName, view.ArtboardName,
             view.AutoPlay,
             MapFitToNative(view.Fit), MapAlignmentToNative(view.RiveAlignment));
+        handler._wireRetryCount = 0;
+        handler.WireDelegatesWhenReady();
     }
 
     public static void MapAutoPlay(RiveAnimationViewHandler handler, IRiveAnimationView view)
