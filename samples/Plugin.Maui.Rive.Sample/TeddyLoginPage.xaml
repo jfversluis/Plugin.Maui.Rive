@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:rive="clr-namespace:Plugin.Maui.Rive;assembly=Plugin.Maui.Rive"
+             x:Class="Plugin.Maui.Rive.Sample.TeddyLoginPage"
+             Title="Teddy Login"
+             BackgroundColor="{AppThemeBinding Light=#D6E2EA, Dark=#1A2332}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="0" VerticalOptions="Center">
+
+            <!-- Teddy Bear Animation -->
+            <rive:RiveAnimationView
+                x:Name="riveView"
+                ResourceName="teddy_login"
+                AutoPlay="True"
+                Fit="Contain"
+                HeightRequest="250"
+                HorizontalOptions="Fill" />
+
+            <!-- Login Card -->
+            <Border StrokeThickness="0"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#2A2A2A}"
+                    Padding="24"
+                    Margin="0,-40,0,0"
+                    Shadow="{Shadow Brush=Black, Opacity=0.15, Offset='0,4', Radius=12}">
+                <VerticalStackLayout Spacing="16">
+
+                    <Label Text="Welcome Back!"
+                           FontSize="22" FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           TextColor="{AppThemeBinding Light=#1A1A1A, Dark=#F0F0F0}" />
+
+                    <Label Text="Sign in with the Teddy bear watching 🐻"
+                           FontSize="13" HorizontalOptions="Center"
+                           TextColor="{AppThemeBinding Light=#888888, Dark=#999999}" />
+
+                    <!-- Email Field -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Email" FontSize="13" FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=#555555, Dark=#BBBBBB}" />
+                        <Border StrokeThickness="1"
+                                Stroke="{AppThemeBinding Light=#DDDDDD, Dark=#444444}"
+                                StrokeShape="RoundRectangle 8"
+                                BackgroundColor="{AppThemeBinding Light=#F8F8F8, Dark=#333333}"
+                                Padding="12,8">
+                            <Entry x:Name="emailEntry"
+                                   Placeholder="you@example.com"
+                                   Keyboard="Email"
+                                   FontSize="15"
+                                   Focused="OnEmailFocused"
+                                   Unfocused="OnEmailUnfocused"
+                                   TextChanged="OnEmailTextChanged" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Password Field -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Password" FontSize="13" FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=#555555, Dark=#BBBBBB}" />
+                        <Border StrokeThickness="1"
+                                Stroke="{AppThemeBinding Light=#DDDDDD, Dark=#444444}"
+                                StrokeShape="RoundRectangle 8"
+                                BackgroundColor="{AppThemeBinding Light=#F8F8F8, Dark=#333333}"
+                                Padding="12,8">
+                            <Entry x:Name="passwordEntry"
+                                   Placeholder="••••••••"
+                                   IsPassword="True"
+                                   FontSize="15"
+                                   Focused="OnPasswordFocused"
+                                   Unfocused="OnPasswordUnfocused" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Login Button -->
+                    <Button x:Name="loginButton"
+                            Text="Sign In"
+                            FontSize="16" FontAttributes="Bold"
+                            BackgroundColor="{AppThemeBinding Light=#B04863, Dark=#C06080}"
+                            TextColor="White"
+                            CornerRadius="8"
+                            HeightRequest="48"
+                            Margin="0,8,0,0"
+                            Clicked="OnLoginClicked" />
+
+                    <!-- Status Label -->
+                    <Label x:Name="statusLabel"
+                           Text=""
+                           FontSize="13"
+                           HorizontalOptions="Center"
+                           TextColor="{AppThemeBinding Light=#888888, Dark=#999999}" />
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Info -->
+            <Label Text="Try: correct password = 'rive' 🔑"
+                   FontSize="12" HorizontalOptions="Center" Margin="0,16,0,0"
+                   TextColor="{AppThemeBinding Light=#AAAAAA, Dark=#666666}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

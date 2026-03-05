@@ -36,6 +36,13 @@
                                  FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
             </ShellContent.Icon>
         </ShellContent>
+        <ShellContent Title="Teddy Login"
+            ContentTemplate="{DataTemplate pages:TeddyLoginPage}">
+            <ShellContent.Icon>
+                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.LockClosed24}"
+                                 FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
+            </ShellContent.Icon>
+        </ShellContent>
         <ShellContent Title="Byte Loading"
             ContentTemplate="{DataTemplate pages:ByteLoadingPage}">
             <ShellContent.Icon>
