@@ -15,7 +15,7 @@
                     StrokeDashArray="6,3">
                 <rive:RiveAnimationView
                     x:Name="riveView"
-                    ResourceName="vehicles"
+                    ResourceName="off_road_car"
                     AutoPlay="True"
                     Fit="Contain"
                     RiveAlignment="Center"
@@ -28,7 +28,7 @@
             <VerticalStackLayout Spacing="8">
                 <Label Text="Animation File" FontAttributes="Bold" FontSize="15" />
                 <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
-                    <Button Text="Vehicles" Clicked="OnAnimationClicked" CommandParameter="vehicles" Margin="0,0,8,4" />
+                    <Button Text="Off Road Car" Clicked="OnAnimationClicked" CommandParameter="off_road_car" Margin="0,0,8,4" />
                     <Button Text="Skills" Clicked="OnAnimationClicked" CommandParameter="skills" Margin="0,0,8,4" />
                     <Button Text="Bear" Clicked="OnAnimationClicked" CommandParameter="bear" Margin="0,0,8,4" />
                     <Button Text="Explorer" Clicked="OnAnimationClicked" CommandParameter="explorer" Margin="0,0,8,4" />

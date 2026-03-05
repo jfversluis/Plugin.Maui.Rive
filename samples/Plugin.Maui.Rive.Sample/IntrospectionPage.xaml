@@ -14,7 +14,7 @@
                     BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}">
                 <rive:RiveAnimationView
                     x:Name="riveView"
-                    ResourceName="vehicles"
+                    ResourceName="off_road_car"
                     AutoPlay="True"
                     Fit="Contain"
                     HeightRequest="220"
@@ -26,7 +26,7 @@
             <VerticalStackLayout Spacing="8">
                 <Label Text="Animation File" FontAttributes="Bold" FontSize="15" />
                 <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
-                    <Button Text="Vehicles" Clicked="OnVehiclesClicked" Margin="0,0,8,4" />
+                    <Button Text="Off Road" Clicked="OnOffRoadCarClicked" Margin="0,0,8,4" />
                     <Button Text="Skills" Clicked="OnSkillsClicked" Margin="0,0,8,4" />
                     <Button Text="Bear" Clicked="OnBearClicked" Margin="0,0,8,4" />
                     <Button Text="Explorer" Clicked="OnExplorerClicked" Margin="0,0,8,4" />

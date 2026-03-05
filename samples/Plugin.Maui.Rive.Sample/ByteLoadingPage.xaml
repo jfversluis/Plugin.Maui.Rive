@@ -27,7 +27,7 @@
                 <Label Text="Load a .riv file bundled as a MauiAsset in the app." FontSize="12"
                        TextColor="{AppThemeBinding Light=#666666, Dark=#999999}" />
                 <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
-                    <Button Text="vehicles" Clicked="OnLoadResourceClicked" CommandParameter="vehicles" Margin="0,0,8,4" />
+                    <Button Text="off_road_car" Clicked="OnLoadResourceClicked" CommandParameter="off_road_car" Margin="0,0,8,4" />
                     <Button Text="bear" Clicked="OnLoadResourceClicked" CommandParameter="bear" Margin="0,0,8,4" />
                     <Button Text="explorer" Clicked="OnLoadResourceClicked" CommandParameter="explorer" Margin="0,0,8,4" />
                 </FlexLayout>

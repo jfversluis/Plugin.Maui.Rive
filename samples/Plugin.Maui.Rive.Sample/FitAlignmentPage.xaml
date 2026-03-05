@@ -14,7 +14,7 @@
                     StrokeDashArray="6,3">
                 <rive:RiveAnimationView
                     x:Name="riveView"
-                    ResourceName="vehicles"
+                    ResourceName="off_road_car"
                     AutoPlay="True"
                     Fit="Contain"
                     RiveAlignment="Center"

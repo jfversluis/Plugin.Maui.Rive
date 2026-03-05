@@ -19,7 +19,7 @@ public partial class MainPage : ContentPage
     }
 
     // Animation switching
-    void OnVehiclesClicked(object? s, EventArgs e) => riveView.ResourceName = "vehicles";
+    void OnOffRoadCarClicked(object? s, EventArgs e) => riveView.ResourceName = "off_road_car";
     void OnBearClicked(object? s, EventArgs e) => riveView.ResourceName = "bear";
     void OnExplorerClicked(object? s, EventArgs e) => riveView.ResourceName = "explorer";
     void OnTreeClicked(object? s, EventArgs e) => riveView.ResourceName = "windy_tree";

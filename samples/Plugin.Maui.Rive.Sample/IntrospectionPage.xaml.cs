@@ -7,7 +7,7 @@ public partial class IntrospectionPage : ContentPage
         InitializeComponent();
     }
 
-    void OnVehiclesClicked(object? s, EventArgs e) { riveView.ResourceName = "vehicles"; ClearResults(); }
+    void OnOffRoadCarClicked(object? s, EventArgs e) { riveView.ResourceName = "off_road_car"; ClearResults(); }
     void OnSkillsClicked(object? s, EventArgs e) { riveView.ResourceName = "skills"; ClearResults(); }
     void OnBearClicked(object? s, EventArgs e) { riveView.ResourceName = "bear"; ClearResults(); }
     void OnExplorerClicked(object? s, EventArgs e) { riveView.ResourceName = "explorer"; ClearResults(); }
