@@ -75,6 +75,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
                     if (!_contentLoaded) LoadRiveContent();
                     break;
 
+
                 case "playbackStarted":
                     VirtualView?.OnPlaybackStarted(new RivePlaybackEventArgs(
                         root.TryGetProperty("animationName", out var an) ? an.GetString() : null));
@@ -229,6 +230,8 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             sb.Append($",artboard:{JsonSerializer.Serialize(view.ArtboardName)}");
         if (!string.IsNullOrEmpty(view.StateMachineName))
             sb.Append($",stateMachines:{JsonSerializer.Serialize(view.StateMachineName)}");
+        else if (string.IsNullOrEmpty(view.AnimationName))
+            sb.Append(",autoDetectStateMachine:true");
         if (!string.IsNullOrEmpty(view.AnimationName))
             sb.Append($",animations:{JsonSerializer.Serialize(view.AnimationName)}");
         sb.Append('}');
@@ -648,6 +651,11 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
                     if (opts.artboard) cfg.artboard = opts.artboard;
                     if (opts.stateMachines) cfg.stateMachines = opts.stateMachines;
                     if (opts.animations) cfg.animations = opts.animations;
+                    // When no state machine or animation is explicitly set,
+                    // auto-detect and load the first state machine (matching iOS/Android behavior)
+                    if (opts.autoDetectStateMachine && !cfg.stateMachines && !cfg.animations) {
+                        cfg.useAutoDetect = true;
+                    }
                     return cfg;
                 }
 
@@ -657,14 +665,56 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
                     const bytes = new Uint8Array(binary.length);
                     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
                     const cfg = buildConfig(opts);
+                    const shouldAutoDetect = cfg.useAutoDetect;
+                    delete cfg.useAutoDetect;
                     cfg.buffer = bytes.buffer;
+                    if (shouldAutoDetect) {
+                        const origOnLoad = cfg.onLoad;
+                        cfg.onLoad = () => {
+                            const smNames = riveInstance.stateMachineNames;
+                            if (smNames && smNames.length > 0) {
+                                // Re-init with state machines to enable input control
+                                riveInstance.stop();
+                                riveInstance.cleanup();
+                                const cfg2 = buildConfig(opts);
+                                delete cfg2.useAutoDetect;
+                                cfg2.buffer = bytes.buffer;
+                                cfg2.stateMachines = smNames;
+                                cfg2.onLoad = () => { if (origOnLoad) origOnLoad(); };
+                                riveInstance = new rive.Rive(cfg2);
+                            } else {
+                                if (origOnLoad) origOnLoad();
+                            }
+                        };
+                    }
                     riveInstance = new rive.Rive(cfg);
                 }
 
                 function loadRiveFromUrl(url, opts) {
                     if (riveInstance) { try { riveInstance.cleanup(); } catch(e) {} }
                     const cfg = buildConfig(opts);
+                    const shouldAutoDetect = cfg.useAutoDetect;
+                    delete cfg.useAutoDetect;
                     cfg.src = url;
+                    if (shouldAutoDetect) {
+                        const origOnLoad = cfg.onLoad;
+                        cfg.onLoad = () => {
+                            const smNames = riveInstance.stateMachineNames;
+                            if (smNames && smNames.length > 0) {
+                                const origUrl = url;
+                                riveInstance.stop();
+                                riveInstance.cleanup();
+                                const cfg2 = buildConfig(opts);
+                                delete cfg2.useAutoDetect;
+                                cfg2.src = origUrl;
+                                cfg2.stateMachines = smNames;
+                                cfg2.onLoad = () => { if (origOnLoad) origOnLoad(); };
+                                riveInstance = new rive.Rive(cfg2);
+                            } else {
+                                if (origOnLoad) origOnLoad();
+                            }
+                        };
+                    }
                     riveInstance = new rive.Rive(cfg);
                 }
 
@@ -693,9 +743,16 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
                 // State machine inputs
                 function getInputByName(name) {
                     if (!riveInstance) return null;
-                    const inputs = riveInstance.stateMachineInputs(riveInstance.stateMachineNames?.[0]);
-                    if (!inputs) return null;
-                    return inputs.find(i => i.name === name) || null;
+                    const smNames = riveInstance.stateMachineNames;
+                    if (!smNames || smNames.length === 0) return null;
+                    for (const smName of smNames) {
+                        const inputs = riveInstance.stateMachineInputs(smName);
+                        if (inputs) {
+                            const found = inputs.find(i => i.name === name);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
                 }
 
                 function riveFireTrigger(name) {
