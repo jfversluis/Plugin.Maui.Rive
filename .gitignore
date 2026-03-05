@@ -406,5 +406,5 @@ native/android/*.aar
 native/rive-cpp/
 native/rive-sharp-interop/
 native/premake5/
-src/Plugin.Maui.Rive/Platforms/Windows/Native/rive.dll
+# rive.dll is committed to the repo (628KB) for CI reliability
 
