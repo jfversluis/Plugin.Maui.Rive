@@ -21,7 +21,7 @@
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <!-- Suppress Android binding generator warnings for types removed/unknown in Metadata.xml -->
-    <NoWarn>$(NoWarn);BG8A00;BG8102;BG8103;BG8401;BG8604;BG8700;BG8800;CS0108</NoWarn>
+    <NoWarn>$(NoWarn);BG8A00;BG8102;BG8103;BG8401;BG8604;BG8605;BG8606;BG8700;BG8800;CS0108</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
