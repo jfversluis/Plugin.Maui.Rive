@@ -240,4 +240,14 @@ public class RiveAnimationView : View, IRiveAnimationView
             return h.GetStateMachineInputs();
         return [];
     }
+
+    /// <summary>Queries the native Rive view for the actual playing state and syncs the IsPlaying property.</summary>
+    public bool QueryIsPlaying()
+    {
+        if (Handler is RiveAnimationViewHandler h)
+        {
+            IsPlaying = h.GetNativeIsPlaying();
+        }
+        return IsPlaying;
+    }
 }

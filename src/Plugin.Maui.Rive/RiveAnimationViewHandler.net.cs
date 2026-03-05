@@ -14,6 +14,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     public partial string[] GetStateMachineNames() => [];
     public partial string[] GetStateMachineInputNames() => [];
     public partial RiveInputInfo[] GetStateMachineInputs() => [];
+    public partial bool GetNativeIsPlaying() => false;
 
     public static void MapResourceName(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
     public static void MapUrl(RiveAnimationViewHandler handler, IRiveAnimationView view) { }

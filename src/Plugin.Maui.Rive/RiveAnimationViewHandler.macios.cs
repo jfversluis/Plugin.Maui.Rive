@@ -415,6 +415,8 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         catch { return []; }
     }
 
+    public partial bool GetNativeIsPlaying() => _viewModel?.IsPlaying ?? false;
+
     private RiveFile? GetRiveFileForCurrentResource()
     {
         var resourceName = VirtualView?.ResourceName;
