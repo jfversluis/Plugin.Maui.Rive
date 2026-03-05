@@ -1,211 +1,108 @@
-using System.Text;
-using System.Text.Json;
+using System.Collections.Concurrent;
 using Microsoft.Maui.Handlers;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.Web.WebView2.Core;
+using Microsoft.UI.Xaml;
+using SkiaSharp;
+using SkiaSharp.Views.Windows;
+using RiveSharp;
 
 namespace Plugin.Maui.Rive;
 
-public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, WebView2>
+public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, SKXamlCanvas>
 {
-    private bool _pageReady;
+    private readonly Scene _scene = new();
+    private readonly ConcurrentQueue<Action> _sceneActions = new();
+    private byte[]? _fileData;
     private bool _contentLoaded;
-    private readonly Queue<string> _pendingScripts = new();
+    private DateTime? _lastPaintTime;
+    private DispatcherTimer? _timer;
 
-    protected override WebView2 CreatePlatformView()
+    protected override SKXamlCanvas CreatePlatformView()
     {
-        var webView = new WebView2
-        {
-            DefaultBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0)
-        };
-        return webView;
+        return new SKXamlCanvas();
     }
 
-    protected override void ConnectHandler(WebView2 platformView)
+    protected override void ConnectHandler(SKXamlCanvas platformView)
     {
         base.ConnectHandler(platformView);
-        InitializeWebViewAsync(platformView);
+        platformView.PaintSurface += OnPaintSurface;
+
+        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60fps
+        _timer.Tick += (_, _) => platformView.Invalidate();
+        _timer.Start();
     }
 
-    protected override void DisconnectHandler(WebView2 platformView)
+    protected override void DisconnectHandler(SKXamlCanvas platformView)
     {
-        if (platformView.CoreWebView2 != null)
-        {
-            platformView.CoreWebView2.WebMessageReceived -= OnWebMessageReceived;
-        }
-        _pageReady = false;
+        _timer?.Stop();
+        _timer = null;
+        platformView.PaintSurface -= OnPaintSurface;
         _contentLoaded = false;
+        _lastPaintTime = null;
         base.DisconnectHandler(platformView);
     }
 
-    private async void InitializeWebViewAsync(WebView2 webView)
+    private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
     {
-        try
+        while (_sceneActions.TryDequeue(out var action))
         {
-            await webView.EnsureCoreWebView2Async();
-            webView.CoreWebView2.Settings.AreDevToolsEnabled = false;
-            webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
-            webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
-            webView.CoreWebView2.WebMessageReceived += OnWebMessageReceived;
-            _pageReady = false;
-            webView.NavigateToString(GetRiveHtml());
+            action();
         }
-        catch (Exception ex)
+
+        if (!_scene.IsLoaded) return;
+
+        var now = DateTime.Now;
+        if (_lastPaintTime is not null)
         {
-            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] WebView2 init failed: {ex}");
+            _scene.AdvanceAndApply((now - _lastPaintTime.Value).TotalSeconds);
         }
+        _lastPaintTime = now;
+
+        e.Surface.Canvas.Clear();
+        var renderer = new RiveSharp.Renderer(e.Surface.Canvas);
+        renderer.Save();
+        renderer.Transform(ComputeAlignment(e.Info.Width, e.Info.Height));
+        _scene.Draw(renderer);
+        renderer.Restore();
     }
 
-    private void OnWebMessageReceived(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
+    private Mat2D ComputeAlignment(double width, double height)
     {
-        try
-        {
-            var json = args.TryGetWebMessageAsString();
-            if (string.IsNullOrEmpty(json)) return;
-
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-            var type = root.GetProperty("type").GetString();
-
-            switch (type)
-            {
-                case "ready":
-                    _pageReady = true;
-                    FlushPendingScripts();
-                    if (!_contentLoaded) LoadRiveContent();
-                    break;
-
-
-                case "playbackStarted":
-                    VirtualView?.OnPlaybackStarted(new RivePlaybackEventArgs(
-                        root.TryGetProperty("animationName", out var an) ? an.GetString() : null));
-                    break;
-
-                case "playbackPaused":
-                    VirtualView?.OnPlaybackPaused(new RivePlaybackEventArgs(
-                        root.TryGetProperty("animationName", out var pn) ? pn.GetString() : null));
-                    break;
-
-                case "playbackStopped":
-                    VirtualView?.OnPlaybackStopped(new RivePlaybackEventArgs(
-                        root.TryGetProperty("animationName", out var sn) ? sn.GetString() : null));
-                    break;
-
-                case "playbackLooped":
-                    VirtualView?.OnPlaybackLooped(new RivePlaybackEventArgs(
-                        root.TryGetProperty("animationName", out var ln) ? ln.GetString() : null));
-                    break;
-
-                case "stateChanged":
-                    VirtualView?.OnStateChanged(new RiveStateChangedEventArgs(
-                        root.GetProperty("stateMachineName").GetString() ?? "",
-                        root.GetProperty("stateName").GetString() ?? ""));
-                    break;
-
-                case "riveEvent":
-                    var props = new Dictionary<string, object>();
-                    if (root.TryGetProperty("properties", out var propsEl))
-                    {
-                        foreach (var prop in propsEl.EnumerateObject())
-                        {
-                            props[prop.Name] = prop.Value.ValueKind switch
-                            {
-                                JsonValueKind.Number => prop.Value.GetSingle(),
-                                JsonValueKind.True => true,
-                                JsonValueKind.False => false,
-                                _ => prop.Value.GetString() ?? ""
-                            };
-                        }
-                    }
-                    VirtualView?.OnRiveEventReceived(new RiveEventReceivedEventArgs(
-                        root.GetProperty("name").GetString() ?? "",
-                        root.TryGetProperty("delay", out var d) ? d.GetSingle() : 0f,
-                        props));
-                    break;
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Message parse error: {ex}");
-        }
+        var fit = MapFitToNative(VirtualView?.Fit ?? RiveFitMode.Contain);
+        var alignment = MapAlignmentToNative(VirtualView?.RiveAlignment ?? RiveAlignmentMode.Center);
+        return RiveSharp.Renderer.ComputeAlignment(
+            fit, alignment,
+            new AABB(0, 0, (float)width, (float)height),
+            new AABB(0, 0, _scene.Width, _scene.Height));
     }
 
-    private async void ExecuteScript(string script)
-    {
-        if (!_pageReady)
-        {
-            _pendingScripts.Enqueue(script);
-            return;
-        }
-
-        try
-        {
-            if (PlatformView?.CoreWebView2 != null)
-                await PlatformView.CoreWebView2.ExecuteScriptAsync(script);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Script error: {ex}");
-        }
-    }
-
-    private async Task<string?> ExecuteScriptWithResultAsync(string script)
-    {
-        if (!_pageReady || PlatformView?.CoreWebView2 == null) return null;
-
-        try
-        {
-            var result = await PlatformView.CoreWebView2.ExecuteScriptAsync(script);
-            if (result == "null" || result == "undefined") return null;
-            // Remove surrounding quotes from JSON string result
-            if (result.StartsWith('"') && result.EndsWith('"'))
-                return JsonSerializer.Deserialize<string>(result);
-            return result;
-        }
-        catch { return null; }
-    }
-
-    private void FlushPendingScripts()
-    {
-        while (_pendingScripts.Count > 0)
-        {
-            var script = _pendingScripts.Dequeue();
-            ExecuteScript(script);
-        }
-    }
+    // --- Loading ---
 
     private void LoadRiveContent()
     {
         var virtualView = VirtualView;
         if (virtualView == null) return;
 
-        var fit = MapFitToJs(virtualView.Fit);
-        var alignment = MapAlignmentToJs(virtualView.RiveAlignment);
-
         if (!string.IsNullOrEmpty(virtualView.ResourceName))
         {
-            LoadFromResourceAsync(virtualView, fit, alignment);
-            _contentLoaded = true;
+            LoadFromResourceAsync(virtualView);
         }
         else if (!string.IsNullOrEmpty(virtualView.Url))
         {
-            LoadFromUrl(virtualView, fit, alignment);
-            _contentLoaded = true;
+            LoadFromUrlAsync(virtualView);
         }
     }
 
-    private async void LoadFromResourceAsync(IRiveAnimationView virtualView, string fit, string alignment)
+    private async void LoadFromResourceAsync(IRiveAnimationView view)
     {
         try
         {
-            var fileName = virtualView.ResourceName + ".riv";
+            var fileName = view.ResourceName + ".riv";
             using var stream = await Microsoft.Maui.Storage.FileSystem.OpenAppPackageFileAsync(fileName);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
-            var base64 = Convert.ToBase64String(ms.ToArray());
-
-            var config = BuildRiveConfig(virtualView, fit, alignment);
-            ExecuteScript($"loadRiveFromBase64('{base64}', {config});");
+            _fileData = ms.ToArray();
+            _sceneActions.Enqueue(() => UpdateScene(view));
+            _contentLoaded = true;
         }
         catch (Exception ex)
         {
@@ -213,167 +110,102 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         }
     }
 
-    private void LoadFromUrl(IRiveAnimationView virtualView, string fit, string alignment)
+    private async void LoadFromUrlAsync(IRiveAnimationView view)
     {
-        var config = BuildRiveConfig(virtualView, fit, alignment);
-        var escapedUrl = JsonSerializer.Serialize(virtualView.Url);
-        ExecuteScript($"loadRiveFromUrl({escapedUrl}, {config});");
+        try
+        {
+            using var http = new HttpClient();
+            _fileData = await http.GetByteArrayAsync(view.Url);
+            _sceneActions.Enqueue(() => UpdateScene(view));
+            _contentLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Error loading URL: {ex}");
+        }
     }
 
-    private static string BuildRiveConfig(IRiveAnimationView view, string fit, string alignment)
+    private void UpdateScene(IRiveAnimationView view)
     {
-        var sb = new StringBuilder("{");
-        sb.Append($"autoplay:{(view.AutoPlay ? "true" : "false")}");
-        sb.Append($",fit:'{fit}'");
-        sb.Append($",alignment:'{alignment}'");
+        if (_fileData == null) return;
+
+        _scene.LoadFile(_fileData);
+
         if (!string.IsNullOrEmpty(view.ArtboardName))
-            sb.Append($",artboard:{JsonSerializer.Serialize(view.ArtboardName)}");
+            _scene.LoadArtboard(view.ArtboardName);
+        else
+            _scene.LoadArtboard(null!);
+
         if (!string.IsNullOrEmpty(view.StateMachineName))
-            sb.Append($",stateMachines:{JsonSerializer.Serialize(view.StateMachineName)}");
-        else if (string.IsNullOrEmpty(view.AnimationName))
-            sb.Append(",autoDetectStateMachine:true");
-        if (!string.IsNullOrEmpty(view.AnimationName))
-            sb.Append($",animations:{JsonSerializer.Serialize(view.AnimationName)}");
-        sb.Append('}');
-        return sb.ToString();
+        {
+            _scene.LoadStateMachine(view.StateMachineName);
+        }
+        else if (!string.IsNullOrEmpty(view.AnimationName))
+        {
+            _scene.LoadAnimation(view.AnimationName);
+        }
+        else
+        {
+            // Auto-detect: try state machine first, fall back to animation
+            if (!_scene.LoadStateMachine(null!))
+            {
+                _scene.LoadAnimation(null!);
+            }
+        }
+
+        _lastPaintTime = null;
+
+        if (view.AutoPlay)
+        {
+            VirtualView?.OnPlaybackStarted(new RivePlaybackEventArgs(_scene.Name));
+        }
     }
 
-    // --- JS Enum Mapping ---
+    // --- Fit/Alignment mapping ---
 
-    private static string MapFitToJs(RiveFitMode fit) => fit switch
+    private static RiveSharp.Fit MapFitToNative(RiveFitMode fit) => fit switch
     {
-        RiveFitMode.Fill => "fill",
-        RiveFitMode.Contain => "contain",
-        RiveFitMode.Cover => "cover",
-        RiveFitMode.FitHeight => "fitHeight",
-        RiveFitMode.FitWidth => "fitWidth",
-        RiveFitMode.ScaleDown => "scaleDown",
-        RiveFitMode.NoFit => "none",
-        RiveFitMode.Layout => "layout",
-        _ => "contain",
+        RiveFitMode.Fill => RiveSharp.Fit.Fill,
+        RiveFitMode.Contain => RiveSharp.Fit.Contain,
+        RiveFitMode.Cover => RiveSharp.Fit.Cover,
+        RiveFitMode.FitHeight => RiveSharp.Fit.FitHeight,
+        RiveFitMode.FitWidth => RiveSharp.Fit.FitWidth,
+        RiveFitMode.ScaleDown => RiveSharp.Fit.ScaleDown,
+        RiveFitMode.NoFit => RiveSharp.Fit.None,
+        _ => RiveSharp.Fit.Contain,
     };
 
-    private static string MapAlignmentToJs(RiveAlignmentMode alignment) => alignment switch
+    private static RiveSharp.Alignment MapAlignmentToNative(RiveAlignmentMode alignment) => alignment switch
     {
-        RiveAlignmentMode.TopLeft => "topLeft",
-        RiveAlignmentMode.TopCenter => "topCenter",
-        RiveAlignmentMode.TopRight => "topRight",
-        RiveAlignmentMode.CenterLeft => "centerLeft",
-        RiveAlignmentMode.Center => "center",
-        RiveAlignmentMode.CenterRight => "centerRight",
-        RiveAlignmentMode.BottomLeft => "bottomLeft",
-        RiveAlignmentMode.BottomCenter => "bottomCenter",
-        RiveAlignmentMode.BottomRight => "bottomRight",
-        _ => "center",
+        RiveAlignmentMode.TopLeft => RiveSharp.Alignment.TopLeft,
+        RiveAlignmentMode.TopCenter => RiveSharp.Alignment.TopCenter,
+        RiveAlignmentMode.TopRight => RiveSharp.Alignment.TopRight,
+        RiveAlignmentMode.CenterLeft => RiveSharp.Alignment.CenterLeft,
+        RiveAlignmentMode.Center => RiveSharp.Alignment.Center,
+        RiveAlignmentMode.CenterRight => RiveSharp.Alignment.CenterRight,
+        RiveAlignmentMode.BottomLeft => RiveSharp.Alignment.BottomLeft,
+        RiveAlignmentMode.BottomCenter => RiveSharp.Alignment.BottomCenter,
+        RiveAlignmentMode.BottomRight => RiveSharp.Alignment.BottomRight,
+        _ => RiveSharp.Alignment.Center,
     };
 
-    private static string MapLoopToJs(RiveLoopMode loop) => loop switch
-    {
-        RiveLoopMode.OneShot => "oneShot",
-        RiveLoopMode.Loop => "loop",
-        RiveLoopMode.PingPong => "pingPong",
-        _ => "auto",
-    };
+    // --- Introspection ---
 
-    private static string MapDirectionToJs(RiveDirectionMode dir) => dir switch
-    {
-        RiveDirectionMode.Backwards => "backwards",
-        RiveDirectionMode.Forwards => "forwards",
-        _ => "auto",
-    };
-
-    // --- Introspection (synchronous-ish via blocking) ---
-
-    public partial string? GetTextRunValue(string textRunName)
-    {
-        if (!_pageReady) return null;
-        var escaped = JsonSerializer.Serialize(textRunName);
-        return RunScriptSync($"riveGetTextRunValue({escaped})");
-    }
-
-    public partial string? GetTextRunValueAtPath(string textRunName, string path)
-    {
-        if (!_pageReady) return null;
-        var escapedName = JsonSerializer.Serialize(textRunName);
-        var escapedPath = JsonSerializer.Serialize(path);
-        return RunScriptSync($"riveGetTextRunValueAtPath({escapedName}, {escapedPath})");
-    }
+    public partial string? GetTextRunValue(string textRunName) => null;
+    public partial string? GetTextRunValueAtPath(string textRunName, string path) => null;
 
     public partial string[] GetArtboardNames()
     {
-        var result = RunScriptSync("riveGetArtboardNames()");
-        return ParseJsonStringArray(result);
+        // rive-sharp Scene API doesn't expose artboard enumeration directly;
+        // the native interop only has LoadArtboard by name.
+        return _scene.IsLoaded ? [_scene.Name] : [];
     }
 
-    public partial string[] GetAnimationNames()
-    {
-        var result = RunScriptSync("riveGetAnimationNames()");
-        return ParseJsonStringArray(result);
-    }
+    public partial string[] GetAnimationNames() => [];
+    public partial string[] GetStateMachineNames() => [];
+    public partial string[] GetStateMachineInputNames() => [];
 
-    public partial string[] GetStateMachineNames()
-    {
-        var result = RunScriptSync("riveGetStateMachineNames()");
-        return ParseJsonStringArray(result);
-    }
-
-    public partial string[] GetStateMachineInputNames()
-    {
-        var result = RunScriptSync("riveGetStateMachineInputNames()");
-        return ParseJsonStringArray(result);
-    }
-
-    public partial RiveInputInfo[] GetStateMachineInputs()
-    {
-        var result = RunScriptSync("riveGetStateMachineInputs()");
-        if (string.IsNullOrEmpty(result) || result == "null") return [];
-
-        try
-        {
-            using var doc = JsonDocument.Parse(result);
-            var list = new List<RiveInputInfo>();
-            foreach (var item in doc.RootElement.EnumerateArray())
-            {
-                var name = item.GetProperty("name").GetString() ?? "";
-                var typeStr = item.GetProperty("type").GetString() ?? "";
-                var type = typeStr switch
-                {
-                    "trigger" => RiveInputType.Trigger,
-                    "boolean" => RiveInputType.Boolean,
-                    "number" => RiveInputType.Number,
-                    _ => RiveInputType.Number
-                };
-                list.Add(new RiveInputInfo(name, type));
-            }
-            return [.. list];
-        }
-        catch { return []; }
-    }
-
-    private string? RunScriptSync(string script)
-    {
-        if (!_pageReady || PlatformView?.CoreWebView2 == null) return null;
-        try
-        {
-            var task = PlatformView.CoreWebView2.ExecuteScriptAsync(script).AsTask();
-            task.Wait(TimeSpan.FromSeconds(2));
-            if (!task.IsCompletedSuccessfully) return null;
-            var result = task.Result;
-            if (result == "null" || result == "undefined") return null;
-            return result;
-        }
-        catch { return null; }
-    }
-
-    private static string[] ParseJsonStringArray(string? json)
-    {
-        if (string.IsNullOrEmpty(json) || json == "null" || json == "[]") return [];
-        try
-        {
-            return JsonSerializer.Deserialize<string[]>(json) ?? [];
-        }
-        catch { return []; }
-    }
+    public partial RiveInputInfo[] GetStateMachineInputs() => [];
 
     // --- Property Mappers ---
 
@@ -389,69 +221,49 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         handler.LoadRiveContent();
     }
 
-    public static void MapAutoPlay(RiveAnimationViewHandler handler, IRiveAnimationView view)
-    {
-        // AutoPlay is applied during load; runtime changes are not typically supported
-    }
-
-    public static void MapFit(RiveAnimationViewHandler handler, IRiveAnimationView view)
-    {
-        var fit = MapFitToJs(view.Fit);
-        handler.ExecuteScript($"riveSetFit('{fit}');");
-    }
-
-    public static void MapAlignment(RiveAnimationViewHandler handler, IRiveAnimationView view)
-    {
-        var alignment = MapAlignmentToJs(view.RiveAlignment);
-        handler.ExecuteScript($"riveSetAlignment('{alignment}');");
-    }
-
-    public static void MapLayoutScaleFactor(RiveAnimationViewHandler handler, IRiveAnimationView view)
-    {
-        // Layout scale factor is primarily an Android concept; no-op on Windows
-    }
+    public static void MapAutoPlay(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
+    public static void MapFit(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
+    public static void MapAlignment(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
+    public static void MapLayoutScaleFactor(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
 
     // --- Command Mappers ---
 
     public static void MapPlay(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        if (args is RivePlayArgs playArgs)
-        {
-            var animName = playArgs.AnimationName != null ? JsonSerializer.Serialize(playArgs.AnimationName) : "null";
-            var loop = MapLoopToJs(playArgs.Loop);
-            var dir = MapDirectionToJs(playArgs.Direction);
-            handler.ExecuteScript($"rivePlay({animName}, '{loop}', '{dir}');");
-        }
-        else
-        {
-            handler.ExecuteScript("rivePlay(null, 'auto', 'auto');");
-        }
-        view.IsPlaying = true;
+        // Scene is always advancing when loaded; play is implicit
+        view.OnPlaybackStarted(new RivePlaybackEventArgs(null));
     }
 
     public static void MapPause(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        handler.ExecuteScript("rivePause();");
-        view.IsPlaying = false;
+        handler._timer?.Stop();
+        view.OnPlaybackPaused(new RivePlaybackEventArgs(null));
     }
 
     public static void MapStop(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        handler.ExecuteScript("riveStop();");
-        view.IsPlaying = false;
+        handler._timer?.Stop();
+        handler._lastPaintTime = null;
+        view.OnPlaybackStopped(new RivePlaybackEventArgs(null));
     }
 
     public static void MapReset(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        handler.ExecuteScript("riveReset();");
+        handler._sceneActions.Enqueue(() =>
+        {
+            if (handler._fileData != null)
+                handler.UpdateScene(view);
+        });
     }
 
     public static void MapFireTrigger(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
         if (args is string triggerName)
         {
-            var escaped = JsonSerializer.Serialize(triggerName);
-            handler.ExecuteScript($"riveFireTrigger({escaped});");
+            handler._sceneActions.Enqueue(() =>
+            {
+                try { handler._scene.FireTrigger(triggerName); } catch { }
+            });
         }
     }
 
@@ -459,8 +271,10 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         if (args is RiveBoolInput input)
         {
-            var name = JsonSerializer.Serialize(input.Name);
-            handler.ExecuteScript($"riveSetBoolInput({name}, {(input.Value ? "true" : "false")});");
+            handler._sceneActions.Enqueue(() =>
+            {
+                try { handler._scene.SetBool(input.Name, input.Value); } catch { }
+            });
         }
     }
 
@@ -468,8 +282,10 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         if (args is RiveNumberInput input)
         {
-            var name = JsonSerializer.Serialize(input.Name);
-            handler.ExecuteScript($"riveSetNumberInput({name}, {input.Value});");
+            handler._sceneActions.Enqueue(() =>
+            {
+                try { handler._scene.SetNumber(input.Name, input.Value); } catch { }
+            });
         }
     }
 
@@ -477,9 +293,10 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         if (args is RiveTriggerAtPath input)
         {
-            var name = JsonSerializer.Serialize(input.InputName);
-            var path = JsonSerializer.Serialize(input.Path);
-            handler.ExecuteScript($"riveFireTriggerAtPath({name}, {path});");
+            handler._sceneActions.Enqueue(() =>
+            {
+                try { handler._scene.FireTrigger(input.InputName); } catch { }
+            });
         }
     }
 
@@ -487,9 +304,10 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         if (args is RiveBoolInputAtPath input)
         {
-            var name = JsonSerializer.Serialize(input.InputName);
-            var path = JsonSerializer.Serialize(input.Path);
-            handler.ExecuteScript($"riveSetBoolInputAtPath({name}, {(input.Value ? "true" : "false")}, {path});");
+            handler._sceneActions.Enqueue(() =>
+            {
+                try { handler._scene.SetBool(input.InputName, input.Value); } catch { }
+            });
         }
     }
 
@@ -497,347 +315,23 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         if (args is RiveNumberInputAtPath input)
         {
-            var name = JsonSerializer.Serialize(input.InputName);
-            var path = JsonSerializer.Serialize(input.Path);
-            handler.ExecuteScript($"riveSetNumberInputAtPath({name}, {input.Value}, {path});");
+            handler._sceneActions.Enqueue(() =>
+            {
+                try { handler._scene.SetNumber(input.InputName, input.Value); } catch { }
+            });
         }
     }
 
-    public static void MapSetTextRunValue(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
-    {
-        if (args is RiveTextRun textRun)
-        {
-            var name = JsonSerializer.Serialize(textRun.TextRunName);
-            var value = JsonSerializer.Serialize(textRun.TextValue);
-            handler.ExecuteScript($"riveSetTextRunValue({name}, {value});");
-        }
-    }
-
-    public static void MapSetTextRunValueAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
-    {
-        if (args is RiveTextRun textRun && textRun.Path is string path)
-        {
-            var name = JsonSerializer.Serialize(textRun.TextRunName);
-            var value = JsonSerializer.Serialize(textRun.TextValue);
-            var pathJs = JsonSerializer.Serialize(path);
-            handler.ExecuteScript($"riveSetTextRunValueAtPath({name}, {value}, {pathJs});");
-        }
-    }
+    public static void MapSetTextRunValue(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args) { }
+    public static void MapSetTextRunValueAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args) { }
 
     public static void MapSetRiveBytes(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        if (args is RiveBytesArgs bytesArgs)
+        if (args is byte[] bytes)
         {
-            var base64 = Convert.ToBase64String(bytesArgs.Bytes);
-            var fit = MapFitToJs(view.Fit);
-            var alignment = MapAlignmentToJs(view.RiveAlignment);
-
-            var sb = new StringBuilder("{");
-            sb.Append($"autoplay:{(view.AutoPlay ? "true" : "false")}");
-            sb.Append($",fit:'{fit}'");
-            sb.Append($",alignment:'{alignment}'");
-            if (!string.IsNullOrEmpty(bytesArgs.ArtboardName))
-                sb.Append($",artboard:{JsonSerializer.Serialize(bytesArgs.ArtboardName)}");
-            if (!string.IsNullOrEmpty(bytesArgs.StateMachineName))
-                sb.Append($",stateMachines:{JsonSerializer.Serialize(bytesArgs.StateMachineName)}");
-            if (!string.IsNullOrEmpty(bytesArgs.AnimationName))
-                sb.Append($",animations:{JsonSerializer.Serialize(bytesArgs.AnimationName)}");
-            sb.Append('}');
-
-            handler.ExecuteScript($"loadRiveFromBase64('{base64}', {sb});");
+            handler._fileData = bytes;
+            handler._sceneActions.Enqueue(() => handler.UpdateScene(view));
             handler._contentLoaded = true;
         }
     }
-
-    // --- Embedded HTML ---
-
-    private static string GetRiveHtml() => """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                html, body { width: 100%; height: 100%; overflow: hidden; background: transparent; }
-                canvas { width: 100%; height: 100%; display: block; }
-            </style>
-        </head>
-        <body>
-            <canvas id="riveCanvas"></canvas>
-            <script src="https://unpkg.com/@rive-app/canvas@2.21.6"></script>
-            <script>
-                let riveInstance = null;
-                const canvas = document.getElementById('riveCanvas');
-
-                function resizeCanvas() {
-                    canvas.width = window.innerWidth * window.devicePixelRatio;
-                    canvas.height = window.innerHeight * window.devicePixelRatio;
-                    canvas.style.width = window.innerWidth + 'px';
-                    canvas.style.height = window.innerHeight + 'px';
-                }
-                window.addEventListener('resize', resizeCanvas);
-                resizeCanvas();
-
-                function postMsg(obj) {
-                    try { window.chrome.webview.postMessage(JSON.stringify(obj)); } catch(e) {}
-                }
-
-                function createRiveCallbacks() {
-                    return {
-                        onLoad: () => postMsg({type:'loaded'}),
-                        onPlay: (e) => postMsg({type:'playbackStarted', animationName: e && e.length > 0 ? e[0] : null}),
-                        onPause: (e) => postMsg({type:'playbackPaused', animationName: e && e.length > 0 ? e[0] : null}),
-                        onStop: (e) => postMsg({type:'playbackStopped', animationName: e && e.length > 0 ? e[0] : null}),
-                        onLoop: (e) => postMsg({type:'playbackLooped', animationName: e && e.length > 0 ? e[0] : null}),
-                        onStateChange: (e) => {
-                            if (e && e.data) {
-                                for (const s of e.data) {
-                                    postMsg({type:'stateChanged', stateMachineName: e.type || '', stateName: s});
-                                }
-                            } else if (e) {
-                                postMsg({type:'stateChanged', stateMachineName: '', stateName: String(e)});
-                            }
-                        },
-                        onRiveEvent: (e) => {
-                            const evt = e.data || e;
-                            postMsg({
-                                type:'riveEvent',
-                                name: evt.name || '',
-                                delay: evt.delay || 0,
-                                properties: evt.properties || {}
-                            });
-                        }
-                    };
-                }
-
-                function mapFit(f) {
-                    const m = {
-                        fill: rive.Fit.Fill,
-                        contain: rive.Fit.Contain,
-                        cover: rive.Fit.Cover,
-                        fitWidth: rive.Fit.FitWidth,
-                        fitHeight: rive.Fit.FitHeight,
-                        scaleDown: rive.Fit.ScaleDown,
-                        none: rive.Fit.None,
-                        layout: rive.Fit.Layout
-                    };
-                    return m[f] || rive.Fit.Contain;
-                }
-
-                function mapAlignment(a) {
-                    const m = {
-                        topLeft: rive.Alignment.TopLeft,
-                        topCenter: rive.Alignment.TopCenter,
-                        topRight: rive.Alignment.TopRight,
-                        centerLeft: rive.Alignment.CenterLeft,
-                        center: rive.Alignment.Center,
-                        centerRight: rive.Alignment.CenterRight,
-                        bottomLeft: rive.Alignment.BottomLeft,
-                        bottomCenter: rive.Alignment.BottomCenter,
-                        bottomRight: rive.Alignment.BottomRight
-                    };
-                    return m[a] || rive.Alignment.Center;
-                }
-
-                function buildConfig(opts) {
-                    const cfg = {
-                        canvas: canvas,
-                        autoplay: opts.autoplay !== false,
-                        fit: mapFit(opts.fit || 'contain'),
-                        alignment: mapAlignment(opts.alignment || 'center'),
-                        ...createRiveCallbacks()
-                    };
-                    if (opts.artboard) cfg.artboard = opts.artboard;
-                    if (opts.stateMachines) cfg.stateMachines = opts.stateMachines;
-                    if (opts.animations) cfg.animations = opts.animations;
-                    // When no state machine or animation is explicitly set,
-                    // auto-detect and load the first state machine (matching iOS/Android behavior)
-                    if (opts.autoDetectStateMachine && !cfg.stateMachines && !cfg.animations) {
-                        cfg.useAutoDetect = true;
-                    }
-                    return cfg;
-                }
-
-                function loadRiveFromBase64(base64, opts) {
-                    if (riveInstance) { try { riveInstance.cleanup(); } catch(e) {} }
-                    const binary = atob(base64);
-                    const bytes = new Uint8Array(binary.length);
-                    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                    const cfg = buildConfig(opts);
-                    const shouldAutoDetect = cfg.useAutoDetect;
-                    delete cfg.useAutoDetect;
-                    cfg.buffer = bytes.buffer;
-                    if (shouldAutoDetect) {
-                        const origOnLoad = cfg.onLoad;
-                        cfg.onLoad = () => {
-                            const smNames = riveInstance.stateMachineNames;
-                            if (smNames && smNames.length > 0) {
-                                // Re-init with state machines to enable input control
-                                riveInstance.stop();
-                                riveInstance.cleanup();
-                                const cfg2 = buildConfig(opts);
-                                delete cfg2.useAutoDetect;
-                                cfg2.buffer = bytes.buffer;
-                                cfg2.stateMachines = smNames;
-                                cfg2.onLoad = () => { if (origOnLoad) origOnLoad(); };
-                                riveInstance = new rive.Rive(cfg2);
-                            } else {
-                                if (origOnLoad) origOnLoad();
-                            }
-                        };
-                    }
-                    riveInstance = new rive.Rive(cfg);
-                }
-
-                function loadRiveFromUrl(url, opts) {
-                    if (riveInstance) { try { riveInstance.cleanup(); } catch(e) {} }
-                    const cfg = buildConfig(opts);
-                    const shouldAutoDetect = cfg.useAutoDetect;
-                    delete cfg.useAutoDetect;
-                    cfg.src = url;
-                    if (shouldAutoDetect) {
-                        const origOnLoad = cfg.onLoad;
-                        cfg.onLoad = () => {
-                            const smNames = riveInstance.stateMachineNames;
-                            if (smNames && smNames.length > 0) {
-                                const origUrl = url;
-                                riveInstance.stop();
-                                riveInstance.cleanup();
-                                const cfg2 = buildConfig(opts);
-                                delete cfg2.useAutoDetect;
-                                cfg2.src = origUrl;
-                                cfg2.stateMachines = smNames;
-                                cfg2.onLoad = () => { if (origOnLoad) origOnLoad(); };
-                                riveInstance = new rive.Rive(cfg2);
-                            } else {
-                                if (origOnLoad) origOnLoad();
-                            }
-                        };
-                    }
-                    riveInstance = new rive.Rive(cfg);
-                }
-
-                // Playback
-                function rivePlay(animName, loop, direction) {
-                    if (!riveInstance) return;
-                    riveInstance.play(animName || undefined);
-                }
-                function rivePause() { if (riveInstance) riveInstance.pause(); }
-                function riveStop() { if (riveInstance) riveInstance.stop(); }
-                function riveReset() {
-                    if (riveInstance) {
-                        riveInstance.reset({autoplay: false});
-                        resizeCanvas();
-                    }
-                }
-
-                // Fit & Alignment
-                function riveSetFit(f) {
-                    if (riveInstance) riveInstance.layout = new rive.Layout({fit: mapFit(f), alignment: riveInstance.layout?.alignment});
-                }
-                function riveSetAlignment(a) {
-                    if (riveInstance) riveInstance.layout = new rive.Layout({fit: riveInstance.layout?.fit, alignment: mapAlignment(a)});
-                }
-
-                // State machine inputs
-                function getInputByName(name) {
-                    if (!riveInstance) return null;
-                    const smNames = riveInstance.stateMachineNames;
-                    if (!smNames || smNames.length === 0) return null;
-                    for (const smName of smNames) {
-                        const inputs = riveInstance.stateMachineInputs(smName);
-                        if (inputs) {
-                            const found = inputs.find(i => i.name === name);
-                            if (found) return found;
-                        }
-                    }
-                    return null;
-                }
-
-                function riveFireTrigger(name) {
-                    const input = getInputByName(name);
-                    if (input) input.fire();
-                }
-                function riveSetBoolInput(name, value) {
-                    const input = getInputByName(name);
-                    if (input) input.value = value;
-                }
-                function riveSetNumberInput(name, value) {
-                    const input = getInputByName(name);
-                    if (input) input.value = value;
-                }
-
-                // Nested artboard inputs (path-based)
-                function riveFireTriggerAtPath(name, path) { riveFireTrigger(name); }
-                function riveSetBoolInputAtPath(name, value, path) { riveSetBoolInput(name, value); }
-                function riveSetNumberInputAtPath(name, value, path) { riveSetNumberInput(name, value); }
-
-                // Text runs
-                function riveGetTextRunValue(name) {
-                    try { return riveInstance ? riveInstance.getTextRunValue(name) : null; }
-                    catch(e) { return null; }
-                }
-                function riveSetTextRunValue(name, value) {
-                    try { if (riveInstance) riveInstance.setTextRunValue(name, value); }
-                    catch(e) {}
-                }
-                function riveGetTextRunValueAtPath(name, path) {
-                    try { return riveInstance ? riveInstance.getTextRunValue(name) : null; }
-                    catch(e) { return null; }
-                }
-                function riveSetTextRunValueAtPath(name, value, path) {
-                    try { if (riveInstance) riveInstance.setTextRunValue(name, value); }
-                    catch(e) {}
-                }
-
-                // Introspection
-                function riveGetArtboardNames() {
-                    try { return riveInstance ? JSON.stringify(riveInstance.artboardNames || []) : '[]'; }
-                    catch(e) { return '[]'; }
-                }
-                function riveGetAnimationNames() {
-                    try { return riveInstance ? JSON.stringify(riveInstance.animationNames || []) : '[]'; }
-                    catch(e) { return '[]'; }
-                }
-                function riveGetStateMachineNames() {
-                    try { return riveInstance ? JSON.stringify(riveInstance.stateMachineNames || []) : '[]'; }
-                    catch(e) { return '[]'; }
-                }
-                function riveGetStateMachineInputNames() {
-                    try {
-                        if (!riveInstance) return '[]';
-                        const smName = riveInstance.stateMachineNames?.[0];
-                        if (!smName) return '[]';
-                        const inputs = riveInstance.stateMachineInputs(smName);
-                        return JSON.stringify((inputs || []).map(i => i.name));
-                    } catch(e) { return '[]'; }
-                }
-                function riveGetStateMachineInputs() {
-                    try {
-                        if (!riveInstance) return '[]';
-                        const smName = riveInstance.stateMachineNames?.[0];
-                        if (!smName) return '[]';
-                        const inputs = riveInstance.stateMachineInputs(smName);
-                        return JSON.stringify((inputs || []).map(i => ({
-                            name: i.name,
-                            type: i.type === rive.StateMachineInputType.Trigger ? 'trigger'
-                                : i.type === rive.StateMachineInputType.Boolean ? 'boolean'
-                                : 'number'
-                        })));
-                    } catch(e) { return '[]'; }
-                }
-
-                // Signal readiness
-                if (typeof rive !== 'undefined') {
-                    postMsg({type:'ready'});
-                } else {
-                    document.querySelector('script[src*="rive-app"]').addEventListener('load', () => {
-                        postMsg({type:'ready'});
-                    });
-                }
-            </script>
-        </body>
-        </html>
-        """;
 }
