@@ -6,6 +6,8 @@ set -euo pipefail
 
 RIVE_IOS_VERSION="6.16.0"
 RIVE_ANDROID_VERSION="11.2.1"
+RIVE_CPP_TAG="v0.0.1"
+PREMAKE_VERSION="5.0.0-beta4"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "=== Downloading native dependencies for Plugin.Maui.Rive ==="
@@ -57,29 +59,30 @@ else
     RIVE_CPP_DIR="$SCRIPT_DIR/native/rive-cpp"
     RIVE_SHARP_DIR="$SCRIPT_DIR/native/rive-sharp-interop"
 
-    # Clone rive-cpp if not present
+    # Clone rive-cpp at pinned version
     if [ ! -d "$RIVE_CPP_DIR" ]; then
         echo "   Cloning rive-cpp..."
-        git clone --depth 1 https://github.com/rive-app/rive-cpp.git "$RIVE_CPP_DIR"
+        git clone --depth 1 --branch main https://github.com/rive-app/rive-cpp.git "$RIVE_CPP_DIR"
     fi
 
-    # Clone rive-sharp interop file if not present
+    # Download rive-sharp interop file
+    RIVE_SHARP_COMMIT="main"
     if [ ! -f "$RIVE_SHARP_DIR/RiveSharpInterop.cpp" ]; then
         echo "   Cloning rive-sharp for interop..."
         mkdir -p "$RIVE_SHARP_DIR"
         curl -L -o "$RIVE_SHARP_DIR/RiveSharpInterop.cpp" \
-            "https://raw.githubusercontent.com/rive-app/rive-sharp/main/native/RiveSharpInterop.cpp"
+            "https://raw.githubusercontent.com/rive-app/rive-sharp/${RIVE_SHARP_COMMIT}/native/RiveSharpInterop.cpp"
         curl -L -o "$RIVE_SHARP_DIR/premake5.lua" \
-            "https://raw.githubusercontent.com/rive-app/rive-sharp/main/native/premake5.lua"
+            "https://raw.githubusercontent.com/rive-app/rive-sharp/${RIVE_SHARP_COMMIT}/native/premake5.lua"
     fi
 
     # Download premake5
     PREMAKE_DIR="$SCRIPT_DIR/native/premake5"
     if [ ! -f "$PREMAKE_DIR/premake5.exe" ]; then
-        echo "   Downloading premake5..."
+        echo "   Downloading premake5 v${PREMAKE_VERSION}..."
         mkdir -p "$PREMAKE_DIR"
         curl -L -o "$PREMAKE_DIR/premake5.zip" \
-            "https://github.com/premake/premake-core/releases/download/v5.0.0-beta4/premake-5.0.0-beta4-windows.zip"
+            "https://github.com/premake/premake-core/releases/download/v${PREMAKE_VERSION}/premake-${PREMAKE_VERSION}-windows.zip"
         unzip -q -o "$PREMAKE_DIR/premake5.zip" -d "$PREMAKE_DIR"
         rm -f "$PREMAKE_DIR/premake5.zip"
     fi

@@ -37,9 +37,12 @@ namespace RiveSharp
 
         public bool LoadFile(Stream stream)
         {
-            var data = new byte[stream.Length];
-            stream.Read(data, 0, data.Length);
-            return LoadFile(data);
+            if (stream == null)
+                return false;
+
+            using var memoryStream = new MemoryStream();
+            stream.CopyTo(memoryStream);
+            return LoadFile(memoryStream.ToArray());
         }
 
         public bool LoadFile(byte[] data)
@@ -109,7 +112,7 @@ namespace RiveSharp
                 {
                     char[] charArray = new char[numChars];
                     RiveAPI.Scene_Name(NativePtr, charArray);
-                    return new string(charArray);
+                    return new string(charArray, 0, numChars - 1);
                 }
                 return "";
             }
@@ -143,14 +146,14 @@ namespace RiveSharp
 
         // --- Introspection ---
 
-        private static string GetNativeString(Func<char[], int> getter)
+        private static string GetNativeString(Func<char[]?, int> getter)
         {
             int numChars = getter(null);
-            if (numChars > 0)
+            if (numChars > 1)
             {
                 char[] charArray = new char[numChars];
                 getter(charArray);
-                return new string(charArray);
+                return new string(charArray, 0, numChars - 1);
             }
             return "";
         }
@@ -223,11 +226,11 @@ namespace RiveSharp
         public string? GetTextRunValue(string name, string? path = null)
         {
             int numChars = RiveAPI.Scene_GetTextRunValue(NativePtr, name, path ?? "", null!);
-            if (numChars > 0)
+            if (numChars > 1)
             {
                 char[] charArray = new char[numChars];
                 RiveAPI.Scene_GetTextRunValue(NativePtr, name, path ?? "", charArray);
-                return new string(charArray);
+                return new string(charArray, 0, numChars - 1);
             }
             return null;
         }

@@ -104,13 +104,20 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         if (!_scene.IsLoaded) return;
 
         var now = DateTime.Now;
-        if (_lastPaintTime is not null)
+        if (_isPlaying)
         {
-            _scene.AdvanceAndApply((now - _lastPaintTime.Value).TotalSeconds);
-            ProcessStateChanges();
-            ProcessReportedEvents();
+            if (_lastPaintTime is not null)
+            {
+                _scene.AdvanceAndApply((now - _lastPaintTime.Value).TotalSeconds);
+                ProcessStateChanges();
+                ProcessReportedEvents();
+            }
+            _lastPaintTime = now;
         }
-        _lastPaintTime = now;
+        else
+        {
+            _lastPaintTime = null;
+        }
 
         e.Surface.Canvas.Clear();
         var alignment = ComputeAlignment(e.Info.Width, e.Info.Height);
@@ -197,12 +204,13 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         }
     }
 
+    private static readonly HttpClient s_httpClient = new();
+
     private async void LoadFromUrlAsync(IRiveAnimationView view)
     {
         try
         {
-            using var http = new HttpClient();
-            _fileData = await http.GetByteArrayAsync(view.Url);
+            _fileData = await s_httpClient.GetByteArrayAsync(view.Url);
             if (PlatformView == null) return; // handler disconnected during await
             _sceneActions.Enqueue(() => UpdateScene(view));
             PlatformView?.Invalidate();
@@ -439,6 +447,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             if (handler._fileData != null)
                 handler.UpdateScene(view);
         });
+        handler.PlatformView?.Invalidate();
     }
 
     public static void MapFireTrigger(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)

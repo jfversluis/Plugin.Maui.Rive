@@ -1,11 +1,7 @@
 // Copyright 2022 Rive
 
 using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.Net.Mime;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace RiveSharp
 {

@@ -29,13 +29,13 @@ namespace RiveSharp
             Y = y;
         }
 
-        public static Alignment TopLeft { get { return new Alignment(1.0f, -1.0f); } }
+        public static Alignment TopLeft { get { return new Alignment(-1.0f, -1.0f); } }
         public static Alignment TopCenter { get { return new Alignment(0.0f, -1.0f); } }
         public static Alignment TopRight { get { return new Alignment(1.0f, -1.0f); } }
-        public static Alignment CenterLeft { get { return new Alignment(1.0f, 0.0f); } }
+        public static Alignment CenterLeft { get { return new Alignment(-1.0f, 0.0f); } }
         public static Alignment Center { get { return new Alignment(0.0f, 0.0f); } }
         public static Alignment CenterRight { get { return new Alignment(1.0f, 0.0f); } }
-        public static Alignment BottomLeft { get { return new Alignment(1.0f, 1.0f); } }
+        public static Alignment BottomLeft { get { return new Alignment(-1.0f, 1.0f); } }
         public static Alignment BottomCenter { get { return new Alignment(0.0f, 1.0f); } }
         public static Alignment BottomRight { get { return new Alignment(1.0f, 1.0f); } }
     }

@@ -22,7 +22,7 @@ namespace RiveSharp
 
         public readonly SKImage SKImage;
 
-        public static RenderImage Decode(byte[] data)
+        public static RenderImage? Decode(byte[] data)
         {
             var skimage = SKImage.FromEncodedData(data);
             return skimage != null ? new RenderImage(skimage) : null;
