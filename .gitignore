@@ -401,3 +401,10 @@ FodyWeavers.xsd
 # Native frameworks (too large for git - download via build script)
 native/ios/RiveRuntime.xcframework/
 native/android/*.aar
+
+# Native build artifacts
+native/rive-cpp/
+native/rive-sharp-interop/
+native/premake5/
+# rive.dll is committed to the repo (628KB) for CI reliability
+

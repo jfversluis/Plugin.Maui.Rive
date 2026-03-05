@@ -4,45 +4,19 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:pages="clr-namespace:Plugin.Maui.Rive.Sample"
-    xmlns:icons="clr-namespace:IconFont.Maui.FluentIcons;assembly=IconFont.Maui.FluentIcons"
     Title="Rive for .NET MAUI">
 
     <TabBar>
         <ShellContent Title="Teddy Login"
-            ContentTemplate="{DataTemplate pages:TeddyLoginPage}">
-            <ShellContent.Icon>
-                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.LockClosed24}"
-                                 FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
-            </ShellContent.Icon>
-        </ShellContent>
+            ContentTemplate="{DataTemplate pages:TeddyLoginPage}" />
         <ShellContent Title="Showcase"
-            ContentTemplate="{DataTemplate pages:ShowcasePage}">
-            <ShellContent.Icon>
-                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.Grid24}"
-                                 FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
-            </ShellContent.Icon>
-        </ShellContent>
+            ContentTemplate="{DataTemplate pages:ShowcasePage}" />
         <ShellContent Title="Playback"
-            ContentTemplate="{DataTemplate pages:MainPage}">
-            <ShellContent.Icon>
-                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.Play24}"
-                                 FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
-            </ShellContent.Icon>
-        </ShellContent>
+            ContentTemplate="{DataTemplate pages:MainPage}" />
         <ShellContent Title="State Machine"
-            ContentTemplate="{DataTemplate pages:StateMachinePage}">
-            <ShellContent.Icon>
-                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.BrainCircuit24}"
-                                 FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
-            </ShellContent.Icon>
-        </ShellContent>
+            ContentTemplate="{DataTemplate pages:StateMachinePage}" />
         <ShellContent Title="Developer"
-            ContentTemplate="{DataTemplate pages:DeveloperToolsPage}">
-            <ShellContent.Icon>
-                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.Wrench24}"
-                                 FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
-            </ShellContent.Icon>
-        </ShellContent>
+            ContentTemplate="{DataTemplate pages:DeveloperToolsPage}" />
     </TabBar>
 
 </Shell>
