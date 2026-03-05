@@ -13,7 +13,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     private readonly Scene _scene = new();
     private readonly ConcurrentQueue<Action> _sceneActions = new();
     private byte[]? _fileData;
-    private bool _contentLoaded;
+    private bool _isPlaying;
     private DateTime? _lastPaintTime;
     private DispatcherTimer? _timer;
     private Mat2D _lastAlignmentMatrix;
@@ -35,19 +35,22 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60fps
         _timer.Tick += (_, _) => platformView.Invalidate();
-        _timer.Start();
+        // Don't start timer until content is loaded and AutoPlay is checked
     }
 
     protected override void DisconnectHandler(SKXamlCanvas platformView)
     {
         _timer?.Stop();
         _timer = null;
+        _isPlaying = false;
         platformView.PaintSurface -= OnPaintSurface;
         platformView.PointerPressed -= OnPointerPressed;
         platformView.PointerMoved -= OnPointerMoved;
         platformView.PointerReleased -= OnPointerReleased;
-        _contentLoaded = false;
         _lastPaintTime = null;
+        _fileData = null;
+        // Drain any pending actions to release closures
+        while (_sceneActions.TryDequeue(out _)) { }
         base.DisconnectHandler(platformView);
     }
 
@@ -183,9 +186,10 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             using var stream = await Microsoft.Maui.Storage.FileSystem.OpenAppPackageFileAsync(fileName);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
+            if (PlatformView == null) return; // handler disconnected during await
             _fileData = ms.ToArray();
             _sceneActions.Enqueue(() => UpdateScene(view));
-            _contentLoaded = true;
+            PlatformView?.Invalidate(); // ensure at least one paint to process the action
         }
         catch (Exception ex)
         {
@@ -199,13 +203,27 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         {
             using var http = new HttpClient();
             _fileData = await http.GetByteArrayAsync(view.Url);
+            if (PlatformView == null) return; // handler disconnected during await
             _sceneActions.Enqueue(() => UpdateScene(view));
-            _contentLoaded = true;
+            PlatformView?.Invalidate();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[Plugin.Maui.Rive] Error loading URL: {ex}");
         }
+    }
+
+    private void StartPlayback()
+    {
+        _isPlaying = true;
+        _lastPaintTime = null;
+        _timer?.Start();
+    }
+
+    private void StopPlayback()
+    {
+        _isPlaying = false;
+        _timer?.Stop();
     }
 
     private void UpdateScene(IRiveAnimationView view)
@@ -240,6 +258,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
         if (view.AutoPlay)
         {
+            StartPlayback();
             VirtualView?.OnPlaybackStarted(new RivePlaybackEventArgs(_scene.Name));
         }
     }
@@ -326,38 +345,58 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     public static void MapResourceName(RiveAnimationViewHandler handler, IRiveAnimationView view)
     {
-        handler._contentLoaded = false;
         handler.LoadRiveContent();
     }
 
     public static void MapUrl(RiveAnimationViewHandler handler, IRiveAnimationView view)
     {
-        handler._contentLoaded = false;
         handler.LoadRiveContent();
     }
 
-    public static void MapAutoPlay(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
-    public static void MapFit(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
-    public static void MapAlignment(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
-    public static void MapLayoutScaleFactor(RiveAnimationViewHandler handler, IRiveAnimationView view) { }
+    public static void MapAutoPlay(RiveAnimationViewHandler handler, IRiveAnimationView view)
+    {
+        if (view.AutoPlay && !handler._isPlaying && handler._scene.IsLoaded)
+        {
+            handler.StartPlayback();
+        }
+        else if (!view.AutoPlay && handler._isPlaying)
+        {
+            handler.StopPlayback();
+        }
+    }
+
+    public static void MapFit(RiveAnimationViewHandler handler, IRiveAnimationView view)
+    {
+        handler.PlatformView?.Invalidate();
+    }
+
+    public static void MapAlignment(RiveAnimationViewHandler handler, IRiveAnimationView view)
+    {
+        handler.PlatformView?.Invalidate();
+    }
+
+    public static void MapLayoutScaleFactor(RiveAnimationViewHandler handler, IRiveAnimationView view)
+    {
+        handler.PlatformView?.Invalidate();
+    }
 
     // --- Command Mappers ---
 
     public static void MapPlay(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        // Scene is always advancing when loaded; play is implicit
+        handler.StartPlayback();
         view.OnPlaybackStarted(new RivePlaybackEventArgs(null));
     }
 
     public static void MapPause(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        handler._timer?.Stop();
+        handler.StopPlayback();
         view.OnPlaybackPaused(new RivePlaybackEventArgs(null));
     }
 
     public static void MapStop(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        handler._timer?.Stop();
+        handler.StopPlayback();
         handler._lastPaintTime = null;
         view.OnPlaybackStopped(new RivePlaybackEventArgs(null));
     }
@@ -442,11 +481,32 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     public static void MapSetRiveBytes(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
-        if (args is byte[] bytes)
+        if (args is RiveBytesArgs bytesArgs)
         {
-            handler._fileData = bytes;
-            handler._sceneActions.Enqueue(() => handler.UpdateScene(view));
-            handler._contentLoaded = true;
+            handler._fileData = bytesArgs.Bytes;
+            handler._sceneActions.Enqueue(() =>
+            {
+                if (handler._fileData == null) return;
+                handler._scene.LoadFile(handler._fileData);
+
+                var artboard = bytesArgs.ArtboardName;
+                handler._scene.LoadArtboard(string.IsNullOrEmpty(artboard) ? null! : artboard);
+
+                if (!string.IsNullOrEmpty(bytesArgs.StateMachineName))
+                    handler._scene.LoadStateMachine(bytesArgs.StateMachineName);
+                else if (!string.IsNullOrEmpty(bytesArgs.AnimationName))
+                    handler._scene.LoadAnimation(bytesArgs.AnimationName);
+                else if (!handler._scene.LoadStateMachine(null!))
+                    handler._scene.LoadAnimation(null!);
+
+                handler._lastPaintTime = null;
+                if (view.AutoPlay)
+                {
+                    handler.StartPlayback();
+                    handler.VirtualView?.OnPlaybackStarted(new RivePlaybackEventArgs(handler._scene.Name));
+                }
+            });
+            handler.PlatformView?.Invalidate();
         }
     }
 }
