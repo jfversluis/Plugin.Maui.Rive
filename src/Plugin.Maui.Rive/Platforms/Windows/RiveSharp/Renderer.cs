@@ -15,7 +15,8 @@ namespace RiveSharp
         FitWidth = 3,
         FitHeight = 4,
         None = 5,
-        ScaleDown = 6
+        ScaleDown = 6,
+        Layout = 7
     };
 
     public class Alignment

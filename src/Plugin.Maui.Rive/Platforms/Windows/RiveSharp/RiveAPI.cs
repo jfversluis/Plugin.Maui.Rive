@@ -172,6 +172,14 @@ namespace RiveSharp
         [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern Int32 Scene_ReportedEventName(IntPtr scene, Int32 index, [Out] char[] charArray);
 
+        // --- Text runs ---
+
+        [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_GetTextRunValue(IntPtr scene, string name, string path, [Out] char[] charArray);
+
+        [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern SByte Scene_SetTextRunValue(IntPtr scene, string name, string path, string value);
+
         public static IntPtr CreateNativeRef(Object obj)
         {
             return GCHandle.ToIntPtr(GCHandle.Alloc(obj));

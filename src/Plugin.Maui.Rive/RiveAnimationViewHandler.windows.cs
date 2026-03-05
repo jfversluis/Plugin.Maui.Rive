@@ -274,6 +274,7 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         RiveFitMode.FitWidth => RiveSharp.Fit.FitWidth,
         RiveFitMode.ScaleDown => RiveSharp.Fit.ScaleDown,
         RiveFitMode.NoFit => RiveSharp.Fit.None,
+        RiveFitMode.Layout => RiveSharp.Fit.Layout,
         _ => RiveSharp.Fit.Contain,
     };
 
@@ -293,8 +294,11 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     // --- Introspection ---
 
-    public partial string? GetTextRunValue(string textRunName) => null;
-    public partial string? GetTextRunValueAtPath(string textRunName, string path) => null;
+    public partial string? GetTextRunValue(string textRunName) =>
+        _scene.IsLoaded ? _scene.GetTextRunValue(textRunName) : null;
+
+    public partial string? GetTextRunValueAtPath(string textRunName, string path) =>
+        _scene.IsLoaded ? _scene.GetTextRunValue(textRunName, path) : null;
 
     public partial string[] GetArtboardNames()
     {
@@ -384,8 +388,33 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     public static void MapPlay(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {
+        if (args is RivePlayArgs playArgs && !string.IsNullOrEmpty(playArgs.AnimationName))
+        {
+            // Load specific animation by name
+            handler._sceneActions.Enqueue(() =>
+            {
+                if (handler._fileData == null) return;
+                // Reload the scene with the specified animation
+                handler._scene.LoadFile(handler._fileData);
+                handler._scene.LoadArtboard(view.ArtboardName ?? null!);
+
+                if (playArgs.Loop == RiveLoopMode.Auto || playArgs.Loop == RiveLoopMode.Loop)
+                {
+                    // Try state machine first for auto/loop
+                    if (!handler._scene.LoadStateMachine(playArgs.AnimationName))
+                        handler._scene.LoadAnimation(playArgs.AnimationName);
+                }
+                else
+                {
+                    handler._scene.LoadAnimation(playArgs.AnimationName);
+                }
+                handler._lastPaintTime = null;
+            });
+        }
+
         handler.StartPlayback();
-        view.OnPlaybackStarted(new RivePlaybackEventArgs(null));
+        view.OnPlaybackStarted(new RivePlaybackEventArgs(
+            args is RivePlayArgs pa ? pa.AnimationName : null));
     }
 
     public static void MapPause(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
@@ -476,8 +505,27 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         }
     }
 
-    public static void MapSetTextRunValue(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args) { }
-    public static void MapSetTextRunValueAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args) { }
+    public static void MapSetTextRunValue(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
+    {
+        if (args is RiveTextRun textRun)
+        {
+            handler._sceneActions.Enqueue(() =>
+            {
+                try { handler._scene.SetTextRunValue(textRun.TextRunName, textRun.TextValue); } catch { }
+            });
+        }
+    }
+
+    public static void MapSetTextRunValueAtPath(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
+    {
+        if (args is RiveTextRun textRun && textRun.Path is string path)
+        {
+            handler._sceneActions.Enqueue(() =>
+            {
+                try { handler._scene.SetTextRunValue(textRun.TextRunName, textRun.TextValue, path); } catch { }
+            });
+        }
+    }
 
     public static void MapSetRiveBytes(RiveAnimationViewHandler handler, IRiveAnimationView view, object? args)
     {

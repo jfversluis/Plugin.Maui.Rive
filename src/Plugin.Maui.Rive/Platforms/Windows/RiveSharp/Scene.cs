@@ -217,5 +217,24 @@ namespace RiveSharp
         {
             return GetNativeString(buf => RiveAPI.Scene_ReportedEventName(NativePtr, index, buf));
         }
+
+        // --- Text runs ---
+
+        public string? GetTextRunValue(string name, string? path = null)
+        {
+            int numChars = RiveAPI.Scene_GetTextRunValue(NativePtr, name, path ?? "", null!);
+            if (numChars > 0)
+            {
+                char[] charArray = new char[numChars];
+                RiveAPI.Scene_GetTextRunValue(NativePtr, name, path ?? "", charArray);
+                return new string(charArray);
+            }
+            return null;
+        }
+
+        public bool SetTextRunValue(string name, string value, string? path = null)
+        {
+            return RiveAPI.Scene_SetTextRunValue(NativePtr, name, path ?? "", value) != 0;
+        }
     }
 }
