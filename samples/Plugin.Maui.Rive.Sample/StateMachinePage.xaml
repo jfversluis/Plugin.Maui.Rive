@@ -27,8 +27,8 @@
                 <Label Text="Animation File" FontAttributes="Bold" FontSize="15" />
                 <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
                     <Button Text="Skills" Clicked="OnAnimationClicked" Margin="0,0,8,4" CommandParameter="skills" />
-                    <Button Text="Off Road" Clicked="OnAnimationClicked" Margin="0,0,8,4" CommandParameter="off_road_car" />
-                    <Button Text="Bear" Clicked="OnAnimationClicked" Margin="0,0,8,4" CommandParameter="bear" />
+                    <Button Text="Rating" Clicked="OnAnimationClicked" Margin="0,0,8,4" CommandParameter="rating" />
+                    <Button Text="Skins" Clicked="OnAnimationClicked" Margin="0,0,8,4" CommandParameter="skins_demo" />
                 </FlexLayout>
             </VerticalStackLayout>
 

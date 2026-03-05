@@ -101,19 +101,43 @@ public partial class StateMachinePage : ContentPage
             {
                 var label = new Label
                 {
-                    Text = $"{n.Name}: 50",
+                    Text = $"{n.Name}: 0",
                     FontSize = 13,
                     FontAttributes = FontAttributes.Bold
                 };
-                var slider = new Slider { Minimum = 0, Maximum = 100, Value = 50 };
+                // Use 0-10 range with 0.5 steps — covers most Rive number inputs
+                var slider = new Slider { Minimum = 0, Maximum = 10, Value = 0 };
                 var numName = n.Name;
                 slider.ValueChanged += (_, args) =>
                 {
-                    label.Text = $"{numName}: {args.NewValue:F1}";
-                    riveView.SetNumberInput(numName, (float)args.NewValue);
+                    var val = Math.Round(args.NewValue, 1);
+                    label.Text = $"{numName}: {val:F1}";
+                    riveView.SetNumberInput(numName, (float)val);
                 };
+                // Also add quick-set buttons for common integer values
+                var btnRow = new FlexLayout { Wrap = Microsoft.Maui.Layouts.FlexWrap.Wrap, JustifyContent = Microsoft.Maui.Layouts.FlexJustify.Start };
+                for (int i = 0; i <= 5; i++)
+                {
+                    var val = i;
+                    var btn = new Button
+                    {
+                        Text = val.ToString(),
+                        FontSize = 12,
+                        Padding = new Thickness(10, 2),
+                        Margin = new Thickness(0, 0, 6, 4),
+                        HeightRequest = 32
+                    };
+                    btn.Clicked += (_, _) =>
+                    {
+                        slider.Value = val;
+                        riveView.SetNumberInput(numName, val);
+                        Log($"🔢 {numName} = {val}");
+                    };
+                    btnRow.Add(btn);
+                }
                 numbersContainer.Add(label);
                 numbersContainer.Add(slider);
+                numbersContainer.Add(btnRow);
             }
         }
 
