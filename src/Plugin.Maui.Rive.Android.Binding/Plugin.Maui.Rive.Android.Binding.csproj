@@ -6,6 +6,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Plugin.Maui.Rive.Android.Binding</RootNamespace>
+    <IsPackable>true</IsPackable>
+    <PackageId>Plugin.Maui.Rive.Android.Binding</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+    <Authors>Gerald Versluis</Authors>
+    <Description>Android native binding for the Rive animation runtime. Used by Plugin.Maui.Rive.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/jfversluis/Plugin.Maui.Rive</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jfversluis/Plugin.Maui.Rive</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

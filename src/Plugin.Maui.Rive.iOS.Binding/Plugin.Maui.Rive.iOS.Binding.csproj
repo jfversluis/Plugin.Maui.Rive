@@ -6,6 +6,14 @@
     <IsBindingProject>true</IsBindingProject>
     <SupportedOSPlatformVersion>14.0</SupportedOSPlatformVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>true</IsPackable>
+    <PackageId>Plugin.Maui.Rive.iOS.Binding</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+    <Authors>Gerald Versluis</Authors>
+    <Description>iOS native binding for the Rive animation runtime. Used by Plugin.Maui.Rive.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/jfversluis/Plugin.Maui.Rive</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jfversluis/Plugin.Maui.Rive</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
