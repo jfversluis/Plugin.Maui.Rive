@@ -140,5 +140,82 @@ namespace RiveSharp
         public void PointerDown(Vec2D pos) => RiveAPI.Scene_PointerDown(NativePtr, pos);
         public void PointerMove(Vec2D pos) => RiveAPI.Scene_PointerMove(NativePtr, pos);
         public void PointerUp(Vec2D pos) => RiveAPI.Scene_PointerUp(NativePtr, pos);
+
+        // --- Introspection ---
+
+        private static string GetNativeString(Func<char[], int> getter)
+        {
+            int numChars = getter(null);
+            if (numChars > 0)
+            {
+                char[] charArray = new char[numChars];
+                getter(charArray);
+                return new string(charArray);
+            }
+            return "";
+        }
+
+        public string[] GetArtboardNames()
+        {
+            int count = RiveAPI.Scene_ArtboardCount(NativePtr);
+            var names = new string[count];
+            for (int i = 0; i < count; i++)
+            {
+                int idx = i;
+                names[i] = GetNativeString(buf => RiveAPI.Scene_ArtboardName(NativePtr, idx, buf));
+            }
+            return names;
+        }
+
+        public string[] GetAnimationNames()
+        {
+            int count = RiveAPI.Scene_AnimationCount(NativePtr);
+            var names = new string[count];
+            for (int i = 0; i < count; i++)
+            {
+                int idx = i;
+                names[i] = GetNativeString(buf => RiveAPI.Scene_AnimationName(NativePtr, idx, buf));
+            }
+            return names;
+        }
+
+        public string[] GetStateMachineNames()
+        {
+            int count = RiveAPI.Scene_StateMachineCount(NativePtr);
+            var names = new string[count];
+            for (int i = 0; i < count; i++)
+            {
+                int idx = i;
+                names[i] = GetNativeString(buf => RiveAPI.Scene_StateMachineName(NativePtr, idx, buf));
+            }
+            return names;
+        }
+
+        public int InputCount => RiveAPI.Scene_InputCount(NativePtr);
+
+        public string GetInputName(int index)
+        {
+            return GetNativeString(buf => RiveAPI.Scene_InputName(NativePtr, index, buf));
+        }
+
+        // Returns 0=trigger, 1=bool, 2=number
+        public int GetInputType(int index)
+        {
+            return RiveAPI.Scene_InputType(NativePtr, index);
+        }
+
+        public int StateChangedCount => RiveAPI.Scene_StateChangedCount(NativePtr);
+
+        public string GetStateChangedName(int index)
+        {
+            return GetNativeString(buf => RiveAPI.Scene_StateChangedName(NativePtr, index, buf));
+        }
+
+        public int ReportedEventCount => RiveAPI.Scene_ReportedEventCount(NativePtr);
+
+        public string GetReportedEventName(int index)
+        {
+            return GetNativeString(buf => RiveAPI.Scene_ReportedEventName(NativePtr, index, buf));
+        }
     }
 }

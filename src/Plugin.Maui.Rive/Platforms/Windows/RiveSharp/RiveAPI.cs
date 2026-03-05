@@ -131,6 +131,47 @@ namespace RiveSharp
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         public static extern void Scene_PointerUp(IntPtr scene, Vec2D pos);
 
+        // --- Introspection ---
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_ArtboardCount(IntPtr scene);
+
+        [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_ArtboardName(IntPtr scene, Int32 index, [Out] char[] charArray);
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_AnimationCount(IntPtr scene);
+
+        [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_AnimationName(IntPtr scene, Int32 index, [Out] char[] charArray);
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_StateMachineCount(IntPtr scene);
+
+        [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_StateMachineName(IntPtr scene, Int32 index, [Out] char[] charArray);
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_InputCount(IntPtr scene);
+
+        [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_InputName(IntPtr scene, Int32 index, [Out] char[] charArray);
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_InputType(IntPtr scene, Int32 index);
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_StateChangedCount(IntPtr scene);
+
+        [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_StateChangedName(IntPtr scene, Int32 index, [Out] char[] charArray);
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_ReportedEventCount(IntPtr scene);
+
+        [DllImport(Library, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Int32 Scene_ReportedEventName(IntPtr scene, Int32 index, [Out] char[] charArray);
+
         public static IntPtr CreateNativeRef(Object obj)
         {
             return GCHandle.ToIntPtr(GCHandle.Alloc(obj));

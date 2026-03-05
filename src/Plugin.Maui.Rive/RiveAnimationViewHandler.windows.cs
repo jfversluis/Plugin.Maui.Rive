@@ -54,6 +54,8 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         if (_lastPaintTime is not null)
         {
             _scene.AdvanceAndApply((now - _lastPaintTime.Value).TotalSeconds);
+            ProcessStateChanges();
+            ProcessReportedEvents();
         }
         _lastPaintTime = now;
 
@@ -63,6 +65,33 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         renderer.Transform(ComputeAlignment(e.Info.Width, e.Info.Height));
         _scene.Draw(renderer);
         renderer.Restore();
+    }
+
+    private void ProcessStateChanges()
+    {
+        int count = _scene.StateChangedCount;
+        if (count > 0 && VirtualView != null)
+        {
+            var smName = _scene.Name;
+            for (int i = 0; i < count; i++)
+            {
+                var stateName = _scene.GetStateChangedName(i);
+                VirtualView.OnStateChanged(new RiveStateChangedEventArgs(smName, stateName));
+            }
+        }
+    }
+
+    private void ProcessReportedEvents()
+    {
+        int count = _scene.ReportedEventCount;
+        if (count > 0 && VirtualView != null)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var eventName = _scene.GetReportedEventName(i);
+                VirtualView.OnRiveEventReceived(new RiveEventReceivedEventArgs(eventName));
+            }
+        }
     }
 
     private Mat2D ComputeAlignment(double width, double height)
@@ -196,16 +225,48 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
 
     public partial string[] GetArtboardNames()
     {
-        // rive-sharp Scene API doesn't expose artboard enumeration directly;
-        // the native interop only has LoadArtboard by name.
-        return _scene.IsLoaded ? [_scene.Name] : [];
+        return _scene.IsLoaded ? _scene.GetArtboardNames() : [];
     }
 
-    public partial string[] GetAnimationNames() => [];
-    public partial string[] GetStateMachineNames() => [];
-    public partial string[] GetStateMachineInputNames() => [];
+    public partial string[] GetAnimationNames()
+    {
+        return _scene.IsLoaded ? _scene.GetAnimationNames() : [];
+    }
 
-    public partial RiveInputInfo[] GetStateMachineInputs() => [];
+    public partial string[] GetStateMachineNames()
+    {
+        return _scene.IsLoaded ? _scene.GetStateMachineNames() : [];
+    }
+
+    public partial string[] GetStateMachineInputNames()
+    {
+        if (!_scene.IsLoaded) return [];
+        int count = _scene.InputCount;
+        var names = new string[count];
+        for (int i = 0; i < count; i++)
+            names[i] = _scene.GetInputName(i);
+        return names;
+    }
+
+    public partial RiveInputInfo[] GetStateMachineInputs()
+    {
+        if (!_scene.IsLoaded) return [];
+        int count = _scene.InputCount;
+        var result = new RiveInputInfo[count];
+        for (int i = 0; i < count; i++)
+        {
+            var name = _scene.GetInputName(i);
+            var nativeType = _scene.GetInputType(i);
+            var type = nativeType switch
+            {
+                1 => RiveInputType.Boolean,
+                2 => RiveInputType.Number,
+                _ => RiveInputType.Trigger,
+            };
+            result[i] = new RiveInputInfo(name, type);
+        }
+        return result;
+    }
 
     // --- Property Mappers ---
 
