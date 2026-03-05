@@ -125,13 +125,48 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
             var artboard = GetFirstArtboardViaReflection();
             if (artboard == null) return [];
 
-            // Get first state machine instance then query input names
             var smMethod = artboard.Class.GetMethod("getFirstStateMachine");
             var sm = smMethod.Invoke(artboard);
             if (sm == null) return [];
 
             var names = CallListStringMethod(sm as Java.Lang.Object, "getInputNames");
             return names ?? [];
+        }
+        catch { return []; }
+    }
+
+    public partial RiveInputInfo[] GetStateMachineInputs()
+    {
+        try
+        {
+            var artboard = GetFirstArtboardViaReflection();
+            if (artboard == null) return [];
+
+            var smMethod = artboard.Class.GetMethod("getFirstStateMachine");
+            var sm = smMethod.Invoke(artboard) as Java.Lang.Object;
+            if (sm == null) return [];
+
+            // Get inputs list via reflection: List<SMIInput>
+            var inputsMethod = sm.Class.GetMethod("getInputs");
+            var inputsObj = inputsMethod.Invoke(sm) as Java.Lang.Object;
+            if (inputsObj == null) return [];
+
+            var inputsList = new global::Android.Runtime.JavaList(inputsObj.Handle, global::Android.Runtime.JniHandleOwnership.DoNotTransfer);
+            var result = new List<RiveInputInfo>();
+
+            foreach (Java.Lang.Object input in inputsList)
+            {
+                var name = input.Class.GetMethod("getName").Invoke(input)?.ToString() ?? "";
+                var isTrigger = (bool)(Java.Lang.Boolean)input.Class.GetMethod("isTrigger").Invoke(input)!;
+                var isBool = (bool)(Java.Lang.Boolean)input.Class.GetMethod("isBoolean").Invoke(input)!;
+
+                var type = isTrigger ? RiveInputType.Trigger
+                         : isBool ? RiveInputType.Boolean
+                         : RiveInputType.Number;
+
+                result.Add(new RiveInputInfo(name, type));
+            }
+            return [.. result];
         }
         catch { return []; }
     }

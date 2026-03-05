@@ -369,6 +369,52 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         catch { return []; }
     }
 
+    public partial RiveInputInfo[] GetStateMachineInputs()
+    {
+        try
+        {
+            using var riveFile = GetRiveFileForCurrentResource();
+            if (riveFile == null) return [];
+            var artboard = riveFile.GetArtboard(out _);
+            if (artboard == null) return [];
+
+            var sm = artboard.DefaultStateMachine;
+            if (sm == null)
+            {
+                var count = artboard.StateMachineCount;
+                for (nint i = 0; i < count && sm == null; i++)
+                    sm = artboard.StateMachineFromIndex(i, out _);
+            }
+            if (sm == null) return [];
+
+            var names = sm.InputNames;
+            if (names == null || names.Length == 0) return [];
+
+            var result = new List<RiveInputInfo>();
+            foreach (var name in names)
+            {
+                try
+                {
+                    if (sm.GetTrigger(name) != null) { result.Add(new(name, RiveInputType.Trigger)); continue; }
+                }
+                catch { }
+                try
+                {
+                    if (sm.GetBool(name) != null) { result.Add(new(name, RiveInputType.Boolean)); continue; }
+                }
+                catch { }
+                try
+                {
+                    if (sm.GetNumber(name) != null) { result.Add(new(name, RiveInputType.Number)); continue; }
+                }
+                catch { }
+                result.Add(new(name, RiveInputType.Trigger)); // fallback
+            }
+            return [.. result];
+        }
+        catch { return []; }
+    }
+
     private RiveFile? GetRiveFileForCurrentResource()
     {
         var resourceName = VirtualView?.ResourceName;

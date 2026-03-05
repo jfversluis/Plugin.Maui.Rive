@@ -232,4 +232,12 @@ public class RiveAnimationView : View, IRiveAnimationView
             return h.GetStateMachineInputNames();
         return [];
     }
+
+    /// <summary>Get typed input info (name + type) for the current state machine.</summary>
+    public RiveInputInfo[] GetStateMachineInputs()
+    {
+        if (Handler is RiveAnimationViewHandler h)
+            return h.GetStateMachineInputs();
+        return [];
+    }
 }

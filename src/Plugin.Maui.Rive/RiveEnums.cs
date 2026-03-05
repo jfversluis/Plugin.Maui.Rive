@@ -110,3 +110,9 @@ public class RivePlaybackEventArgs : EventArgs
         AnimationName = animationName;
     }
 }
+
+/// <summary>Describes a state machine input with its name and type.</summary>
+public enum RiveInputType { Trigger, Boolean, Number }
+
+/// <summary>Information about a single state machine input.</summary>
+public record RiveInputInfo(string Name, RiveInputType Type);

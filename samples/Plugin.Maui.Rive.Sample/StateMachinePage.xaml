@@ -26,41 +26,51 @@
             <VerticalStackLayout Spacing="8">
                 <Label Text="Animation File" FontAttributes="Bold" FontSize="15" />
                 <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
-                    <Button Text="Skills" Clicked="OnSkillsClicked" Margin="0,0,8,4" />
-                    <Button Text="Off Road" Clicked="OnOffRoadClicked" Margin="0,0,8,4" />
-                    <Button Text="Bear" Clicked="OnBearClicked" Margin="0,0,8,4" />
+                    <Button Text="Skills" Clicked="OnAnimationClicked" Margin="0,0,8,4" CommandParameter="skills" />
+                    <Button Text="Off Road" Clicked="OnAnimationClicked" Margin="0,0,8,4" CommandParameter="off_road_car" />
+                    <Button Text="Bear" Clicked="OnAnimationClicked" Margin="0,0,8,4" CommandParameter="bear" />
                 </FlexLayout>
             </VerticalStackLayout>
 
-            <!-- Trigger Inputs -->
-            <VerticalStackLayout Spacing="8">
-                <Label Text="Trigger Input" FontAttributes="Bold" FontSize="15" />
-                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
-                    <Entry x:Name="triggerEntry" Placeholder="Trigger name" />
-                    <Button Grid.Column="1" Text="Fire!" Clicked="OnFireTriggerClicked" />
-                </Grid>
-            </VerticalStackLayout>
+            <!-- Discovered Inputs (auto-populated) -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                    StrokeShape="RoundRectangle 12"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}"
+                    Padding="16">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="State Machine Inputs" FontAttributes="Bold" FontSize="16" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="Refresh" Clicked="OnRefreshInputsClicked"
+                                FontSize="12" Padding="12,4" HeightRequest="32" />
+                    </Grid>
 
-            <!-- Bool & Number Inputs -->
-            <Grid ColumnDefinitions="*, *" ColumnSpacing="16">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="Boolean Input" FontAttributes="Bold" FontSize="15" />
-                    <Entry x:Name="boolNameEntry" Placeholder="Input name" />
-                    <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
-                        <Button Text="True" Clicked="OnSetBoolTrueClicked" Margin="0,0,8,4" />
-                        <Button Text="False" Clicked="OnSetBoolFalseClicked" Margin="0,0,8,4" />
-                    </FlexLayout>
-                </VerticalStackLayout>
+                    <Label x:Name="noInputsLabel" Text="Tap Refresh to discover inputs..."
+                           FontSize="13" IsVisible="True"
+                           TextColor="{AppThemeBinding Light=#999999, Dark=#666666}" />
 
-                <VerticalStackLayout Grid.Column="1" Spacing="8">
-                    <Label Text="Number Input" FontAttributes="Bold" FontSize="15" />
-                    <Entry x:Name="numberNameEntry" Placeholder="Input name" />
-                    <Slider x:Name="numberSlider" Minimum="0" Maximum="100" Value="50"
-                            ValueChanged="OnNumberSliderChanged" />
-                    <Label x:Name="numberValueLabel" Text="Value: 50" HorizontalOptions="Center" FontSize="12"
-                           TextColor="{AppThemeBinding Light=#666666, Dark=#999999}" />
+                    <!-- Triggers -->
+                    <VerticalStackLayout x:Name="triggersSection" Spacing="6" IsVisible="False">
+                        <Label Text="🔫 Triggers" FontAttributes="Bold" FontSize="14"
+                               TextColor="{AppThemeBinding Light=#D84315, Dark=#FF8A65}" />
+                        <FlexLayout x:Name="triggersContainer" Wrap="Wrap" JustifyContent="Start" AlignItems="Center" />
+                    </VerticalStackLayout>
+
+                    <!-- Booleans -->
+                    <VerticalStackLayout x:Name="booleansSection" Spacing="6" IsVisible="False">
+                        <Label Text="✅ Booleans" FontAttributes="Bold" FontSize="14"
+                               TextColor="{AppThemeBinding Light=#1565C0, Dark=#64B5F6}" />
+                        <VerticalStackLayout x:Name="booleansContainer" Spacing="4" />
+                    </VerticalStackLayout>
+
+                    <!-- Numbers -->
+                    <VerticalStackLayout x:Name="numbersSection" Spacing="6" IsVisible="False">
+                        <Label Text="🔢 Numbers" FontAttributes="Bold" FontSize="14"
+                               TextColor="{AppThemeBinding Light=#2E7D32, Dark=#81C784}" />
+                        <VerticalStackLayout x:Name="numbersContainer" Spacing="8" />
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
-            </Grid>
+            </Border>
 
             <!-- Event Log -->
             <Border StrokeThickness="1"
@@ -70,7 +80,7 @@
                     Padding="12">
                 <VerticalStackLayout Spacing="4">
                     <Label Text="State Machine Events" FontAttributes="Bold" FontSize="13" />
-                    <Label x:Name="logLabel" FontSize="11" MaxLines="6" Text="Interact with inputs above..."
+                    <Label x:Name="logLabel" FontSize="11" MaxLines="8" Text="Interact with inputs above..."
                            TextColor="{AppThemeBinding Light=#666666, Dark=#999999}" />
                 </VerticalStackLayout>
             </Border>

@@ -54,4 +54,5 @@ public partial class RiveAnimationViewHandler
     public partial string[] GetAnimationNames();
     public partial string[] GetStateMachineNames();
     public partial string[] GetStateMachineInputNames();
+    public partial RiveInputInfo[] GetStateMachineInputs();
 }
