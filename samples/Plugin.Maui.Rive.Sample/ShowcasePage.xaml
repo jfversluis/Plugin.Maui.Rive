@@ -39,30 +39,6 @@
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Off Road Car - INTERACTIVE -->
-            <Border StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
-                    StrokeShape="RoundRectangle 16"
-                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}">
-                <VerticalStackLayout>
-                    <rive:RiveAnimationView
-                        ResourceName="off_road_car"
-                        AutoPlay="True" Fit="Contain"
-                        HeightRequest="200" HorizontalOptions="Fill" />
-                    <VerticalStackLayout Padding="16,8,16,16" Spacing="4">
-                        <HorizontalStackLayout Spacing="8">
-                            <Label Text="🚗 Off Road Car" FontSize="16" FontAttributes="Bold" />
-                            <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
-                                    BackgroundColor="#4CAF50" Padding="6,2">
-                                <Label Text="👆 Tap to interact" FontSize="10" TextColor="White" />
-                            </Border>
-                        </HorizontalStackLayout>
-                        <Label Text="Tap to bounce the car — state machine driven"
-                               FontSize="12" TextColor="{AppThemeBinding Light=#888, Dark=#999}" />
-                    </VerticalStackLayout>
-                </VerticalStackLayout>
-            </Border>
-
             <!-- Skins Demo - INTERACTIVE -->
             <Border StrokeThickness="1"
                     Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
@@ -82,6 +58,30 @@
                             </Border>
                         </HorizontalStackLayout>
                         <Label Text="Tap to cycle through character skins"
+                               FontSize="12" TextColor="{AppThemeBinding Light=#888, Dark=#999}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Off Road Car - LOOPING -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}">
+                <VerticalStackLayout>
+                    <rive:RiveAnimationView
+                        ResourceName="off_road_car"
+                        AutoPlay="True" Fit="Contain"
+                        HeightRequest="200" HorizontalOptions="Fill" />
+                    <VerticalStackLayout Padding="16,8,16,16" Spacing="4">
+                        <HorizontalStackLayout Spacing="8">
+                            <Label Text="🚗 Off Road Car" FontSize="16" FontAttributes="Bold" />
+                            <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                                    BackgroundColor="{AppThemeBinding Light=#9E9E9E, Dark=#666}" Padding="6,2">
+                                <Label Text="🔁 Looping" FontSize="10" TextColor="White" />
+                            </Border>
+                        </HorizontalStackLayout>
+                        <Label Text="Bouncy off-road driving animation — auto-playing loop"
                                FontSize="12" TextColor="{AppThemeBinding Light=#888, Dark=#999}" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>
