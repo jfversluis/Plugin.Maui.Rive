@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.Maui.Handlers;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Input;
 using SkiaSharp;
 using SkiaSharp.Views.Windows;
 using RiveSharp;
@@ -15,6 +16,9 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     private bool _contentLoaded;
     private DateTime? _lastPaintTime;
     private DispatcherTimer? _timer;
+    private Mat2D _lastAlignmentMatrix;
+    private int _lastCanvasWidth;
+    private int _lastCanvasHeight;
 
     protected override SKXamlCanvas CreatePlatformView()
     {
@@ -25,6 +29,9 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
     {
         base.ConnectHandler(platformView);
         platformView.PaintSurface += OnPaintSurface;
+        platformView.PointerPressed += OnPointerPressed;
+        platformView.PointerMoved += OnPointerMoved;
+        platformView.PointerReleased += OnPointerReleased;
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60fps
         _timer.Tick += (_, _) => platformView.Invalidate();
@@ -36,9 +43,52 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         _timer?.Stop();
         _timer = null;
         platformView.PaintSurface -= OnPaintSurface;
+        platformView.PointerPressed -= OnPointerPressed;
+        platformView.PointerMoved -= OnPointerMoved;
+        platformView.PointerReleased -= OnPointerReleased;
         _contentLoaded = false;
         _lastPaintTime = null;
         base.DisconnectHandler(platformView);
+    }
+
+    private Vec2D TransformPointerToScene(PointerRoutedEventArgs e)
+    {
+        var pos = e.GetCurrentPoint(PlatformView).Position;
+        // Scale from DIPs to pixel coordinates (SKXamlCanvas renders at pixel resolution)
+        var scale = PlatformView.XamlRoot?.RasterizationScale ?? 1.0;
+        float px = (float)(pos.X * scale);
+        float py = (float)(pos.Y * scale);
+
+        // Apply the inverse of the alignment matrix to go from canvas to scene coordinates
+        if (_lastAlignmentMatrix.Invert(out var inverse))
+        {
+            var scenePos = inverse * new Vec2D(px, py);
+            return scenePos;
+        }
+        return new Vec2D(px, py);
+    }
+
+    private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_scene.IsLoaded) return;
+        var pos = TransformPointerToScene(e);
+        _sceneActions.Enqueue(() => _scene.PointerDown(pos));
+        (sender as UIElement)?.CapturePointer(e.Pointer);
+    }
+
+    private void OnPointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_scene.IsLoaded) return;
+        var pos = TransformPointerToScene(e);
+        _sceneActions.Enqueue(() => _scene.PointerMove(pos));
+    }
+
+    private void OnPointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_scene.IsLoaded) return;
+        var pos = TransformPointerToScene(e);
+        _sceneActions.Enqueue(() => _scene.PointerUp(pos));
+        (sender as UIElement)?.ReleasePointerCapture(e.Pointer);
     }
 
     private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
@@ -60,9 +110,13 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         _lastPaintTime = now;
 
         e.Surface.Canvas.Clear();
+        var alignment = ComputeAlignment(e.Info.Width, e.Info.Height);
+        _lastAlignmentMatrix = alignment;
+        _lastCanvasWidth = e.Info.Width;
+        _lastCanvasHeight = e.Info.Height;
         var renderer = new RiveSharp.Renderer(e.Surface.Canvas);
         renderer.Save();
-        renderer.Transform(ComputeAlignment(e.Info.Width, e.Info.Height));
+        renderer.Transform(alignment);
         _scene.Draw(renderer);
         renderer.Restore();
     }
