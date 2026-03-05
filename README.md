@@ -6,26 +6,23 @@
 
 ## Supported Platforms
 
-| Platform | Status |
-|----------|--------|
-| iOS 14+  | ✅ Working |
-| Android 21+ | ✅ Working |
+| Platform | Version | Status |
+|----------|---------|--------|
+| iOS | 14+ | ✅ Supported |
+| Android | 21+ | ✅ Supported |
+| Windows | 10.0.19041+ | ✅ Supported |
 
 ## Getting Started
 
-### 1. Download Native Dependencies
-
-The native Rive SDKs are too large for git. Run the download script first:
+### 1. Install the NuGet package
 
 ```bash
-./download-native-deps.sh
+dotnet add package Plugin.Maui.Rive
 ```
 
-This downloads:
-- **iOS**: `RiveRuntime.xcframework` v6.16.0 (~90MB)
-- **Android**: `rive-android` v11.2.1 AAR (~10MB)
+Or search for `Plugin.Maui.Rive` in the NuGet Package Manager in Visual Studio.
 
-### 2. Register Rive in MauiProgram.cs
+### 2. Initialize in MauiProgram.cs
 
 ```csharp
 using Plugin.Maui.Rive;
@@ -35,17 +32,19 @@ public static MauiApp CreateMauiApp()
     var builder = MauiApp.CreateBuilder();
     builder
         .UseMauiApp<App>()
-        .UseRive();  // Register Rive handler
+        .UseRive();
 
     return builder.Build();
 }
 ```
 
-### 3. Add a .riv File
+### 3. Add a .riv file
 
-Place your `.riv` file in `Resources/Raw/` (e.g., `Resources/Raw/animation.riv`).
+Place your `.riv` file in the `Resources/Raw/` folder of your project. You can download free animations from the [Rive Community](https://rive.app/community/).
 
-### 4. Use RiveAnimationView in XAML
+Some example `.riv` files are included in the [sample app](samples/Plugin.Maui.Rive.Sample/Resources/Raw/).
+
+### 4. Use in XAML
 
 ```xml
 <ContentPage xmlns:rive="clr-namespace:Plugin.Maui.Rive;assembly=Plugin.Maui.Rive">
@@ -57,6 +56,28 @@ Place your `.riv` file in `Resources/Raw/` (e.g., `Resources/Raw/animation.riv`)
         HeightRequest="400" />
 
 </ContentPage>
+```
+
+### 5. Or use in code
+
+```csharp
+var riveView = new RiveAnimationView
+{
+    ResourceName = "animation",
+    AutoPlay = true,
+    Fit = RiveFitMode.Contain,
+    HeightRequest = 400
+};
+```
+
+You can also load animations from a URL:
+
+```csharp
+var riveView = new RiveAnimationView
+{
+    Url = "https://cdn.rive.app/animations/vehicles.riv",
+    AutoPlay = true
+};
 ```
 
 ## API Reference
@@ -144,22 +165,29 @@ riveView.StateChanged += (s, e) =>
 
 ## Building from Source
 
+If you want to contribute or build from source:
+
 ```bash
 # Clone the repository
 git clone https://github.com/jfversluis/Plugin.Maui.Rive.git
 cd Plugin.Maui.Rive
 
-# Download native dependencies
+# Download native dependencies (iOS xcframework, Android AAR)
 ./download-native-deps.sh
 
 # Build
-dotnet build src/Plugin.Maui.Rive/Plugin.Maui.Rive.csproj
+dotnet build src/Plugin.Maui.Rive.sln
 ```
+
+> **Note:** The Windows native runtime (`rive.dll`) is included in the repository. iOS and Android native SDKs must be downloaded separately using the script above due to their size.
 
 ## Native SDK Versions
 
-- **iOS**: [RiveRuntime](https://github.com/rive-app/rive-ios) v6.16.0
-- **Android**: [rive-android](https://github.com/rive-app/rive-android) v11.2.1
+| Platform | SDK | Version |
+|----------|-----|---------|
+| iOS | [RiveRuntime](https://github.com/rive-app/rive-ios) | v6.16.0 |
+| Android | [rive-android](https://github.com/rive-app/rive-android) | v11.2.1 |
+| Windows | [rive-cpp](https://github.com/rive-app/rive-cpp) + [SkiaSharp](https://github.com/mono/SkiaSharp) | latest |
 
 ## License
 
