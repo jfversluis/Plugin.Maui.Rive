@@ -99,15 +99,18 @@ public partial class StateMachinePage : ContentPage
             numbersSection.IsVisible = true;
             foreach (var n in numbers)
             {
+                var numName = n.Name;
+                // Rive doesn't expose min/max bounds on number inputs,
+                // so we cap at a reasonable range (0–10)
+                const float maxValue = 10;
+
                 var label = new Label
                 {
-                    Text = $"{n.Name}: 0",
+                    Text = $"{n.Name}: 0  (range 0–{maxValue:F0})",
                     FontSize = 13,
                     FontAttributes = FontAttributes.Bold
                 };
-                var numName = n.Name;
 
-                // Stepper with - and + buttons and a value display
                 var valueLabel = new Label
                 {
                     Text = "0",
@@ -123,22 +126,30 @@ public partial class StateMachinePage : ContentPage
                 var minusBtn = new Button { Text = "−", FontSize = 18, WidthRequest = 44, HeightRequest = 44, Padding = 0 };
                 var plusBtn = new Button { Text = "+", FontSize = 18, WidthRequest = 44, HeightRequest = 44, Padding = 0 };
 
+                void UpdateDisplay()
+                {
+                    valueLabel.Text = currentValue.ToString("F0");
+                    label.Text = $"{numName}: {currentValue:F0}  (range 0–{maxValue:F0})";
+                    minusBtn.IsEnabled = currentValue > 0;
+                    plusBtn.IsEnabled = currentValue < maxValue;
+                }
+
                 minusBtn.Clicked += (_, _) =>
                 {
                     currentValue = Math.Max(0, currentValue - 1);
-                    valueLabel.Text = currentValue.ToString("F0");
-                    label.Text = $"{numName}: {currentValue:F0}";
+                    UpdateDisplay();
                     riveView.SetNumberInput(numName, currentValue);
                     Log($"🔢 {numName} = {currentValue:F0}");
                 };
                 plusBtn.Clicked += (_, _) =>
                 {
-                    currentValue += 1;
-                    valueLabel.Text = currentValue.ToString("F0");
-                    label.Text = $"{numName}: {currentValue:F0}";
+                    currentValue = Math.Min(maxValue, currentValue + 1);
+                    UpdateDisplay();
                     riveView.SetNumberInput(numName, currentValue);
                     Log($"🔢 {numName} = {currentValue:F0}");
                 };
+
+                UpdateDisplay();
 
                 var stepperRow = new HorizontalStackLayout { Spacing = 8, HorizontalOptions = LayoutOptions.Start };
                 stepperRow.Add(minusBtn);
