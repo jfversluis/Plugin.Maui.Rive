@@ -171,6 +171,8 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         catch { return []; }
     }
 
+    public partial bool GetNativeIsPlaying() => _riveView?.IsPlaying ?? false;
+
     /// <summary>
     /// Gets the Rive File object via reflection since the binding types are filtered out.
     /// Uses the controller path: RiveAnimationView -> getController() -> getFile()

@@ -46,8 +46,9 @@ public partial class DeveloperToolsPage : ContentPage
                 inputNamesLabel.TextColor = Colors.Orange;
             }
 
-            isPlayingLabel.Text = $"IsPlaying: {riveView.IsPlaying}";
-            isPlayingLabel.TextColor = riveView.IsPlaying ? Colors.Green : Colors.Red;
+            var playing = riveView.QueryIsPlaying();
+            isPlayingLabel.Text = $"IsPlaying: {playing}";
+            isPlayingLabel.TextColor = playing ? Colors.Green : Colors.Red;
         });
     }
 

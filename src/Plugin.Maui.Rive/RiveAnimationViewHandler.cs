@@ -57,4 +57,5 @@ public partial class RiveAnimationViewHandler
     public partial string[] GetStateMachineNames();
     public partial string[] GetStateMachineInputNames();
     public partial RiveInputInfo[] GetStateMachineInputs();
+    public partial bool GetNativeIsPlaying();
 }
