@@ -226,6 +226,8 @@ public partial class RiveAnimationViewHandler : ViewHandler<IRiveAnimationView, 
         _timer?.Stop();
     }
 
+    public partial bool GetNativeIsPlaying() => _isPlaying;
+
     private void UpdateScene(IRiveAnimationView view)
     {
         if (_fileData == null) return;
