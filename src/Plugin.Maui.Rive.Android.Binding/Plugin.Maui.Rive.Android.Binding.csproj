@@ -8,13 +8,23 @@
     <RootNamespace>Plugin.Maui.Rive.Android.Binding</RootNamespace>
     <IsPackable>true</IsPackable>
     <PackageId>Plugin.Maui.Rive.Android.Binding</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
     <Authors>Gerald Versluis</Authors>
+    <Copyright>Copyright © Gerald Versluis and contributors</Copyright>
+    <Title>Rive Animation Runtime - Android Native Binding</Title>
     <Description>Android native binding for the Rive animation runtime. Used by Plugin.Maui.Rive.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/jfversluis/Plugin.Maui.Rive</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jfversluis/Plugin.Maui.Rive</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>dotnet-maui;maui;plugin;rive;animation;android;binding</PackageTags>
+    <PackageIcon>icon.png</PackageIcon>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\nuget.png" PackagePath="icon.png" Pack="true" />
+  </ItemGroup>
 
   <ItemGroup>
     <AndroidLibrary Include="..\..\native\android\rive-android-11.2.1.aar" />
