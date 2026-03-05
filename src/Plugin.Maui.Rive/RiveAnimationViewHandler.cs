@@ -1,5 +1,7 @@
 #if IOS || MACCATALYST
 using PlatformView = UIKit.UIView;
+#elif WINDOWS
+using PlatformView = Microsoft.UI.Xaml.Controls.WebView2;
 #else
 using PlatformView = System.Object;
 #endif
