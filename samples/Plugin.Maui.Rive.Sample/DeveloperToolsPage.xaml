@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:rive="clr-namespace:Plugin.Maui.Rive;assembly=Plugin.Maui.Rive"
+             x:Class="Plugin.Maui.Rive.Sample.DeveloperToolsPage"
+             Title="Developer Tools">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="16">
+
+            <!-- Animation Preview -->
+            <Border StrokeThickness="2"
+                    Stroke="{AppThemeBinding Light=#CCCCCC, Dark=#444444}"
+                    StrokeShape="RoundRectangle 12"
+                    StrokeDashArray="6,3">
+                <rive:RiveAnimationView
+                    x:Name="riveView"
+                    ResourceName="vehicles"
+                    AutoPlay="True"
+                    Fit="Contain"
+                    RiveAlignment="Center"
+                    HeightRequest="220"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Fill" />
+            </Border>
+
+            <!-- Animation selector -->
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Animation File" FontAttributes="Bold" FontSize="15" />
+                <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                    <Button Text="Vehicles" Clicked="OnAnimationClicked" CommandParameter="vehicles" Margin="0,0,8,4" />
+                    <Button Text="Skills" Clicked="OnAnimationClicked" CommandParameter="skills" Margin="0,0,8,4" />
+                    <Button Text="Bear" Clicked="OnAnimationClicked" CommandParameter="bear" Margin="0,0,8,4" />
+                    <Button Text="Explorer" Clicked="OnAnimationClicked" CommandParameter="explorer" Margin="0,0,8,4" />
+                </FlexLayout>
+            </VerticalStackLayout>
+
+            <!-- ═══ INTROSPECTION ═══ -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                    StrokeShape="RoundRectangle 12"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}"
+                    Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="🔍 Introspection" FontAttributes="Bold" FontSize="16" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="Query All" Clicked="OnQueryAllClicked"
+                                FontSize="12" Padding="12,4" HeightRequest="32" />
+                    </Grid>
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Artboard Names" FontAttributes="Bold" FontSize="13" />
+                        <Label x:Name="artboardNamesLabel" FontSize="12" Text="(tap Query All)"
+                               TextColor="{AppThemeBinding Light=#666666, Dark=#999999}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Animation Names" FontAttributes="Bold" FontSize="13" />
+                        <Label x:Name="animationNamesLabel" FontSize="12" Text="—"
+                               TextColor="{AppThemeBinding Light=#666666, Dark=#999999}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="State Machine Names" FontAttributes="Bold" FontSize="13" />
+                        <Label x:Name="stateMachineNamesLabel" FontSize="12" Text="—"
+                               TextColor="{AppThemeBinding Light=#666666, Dark=#999999}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Inputs (typed)" FontAttributes="Bold" FontSize="13" />
+                        <Label x:Name="inputNamesLabel" FontSize="12" Text="—"
+                               TextColor="{AppThemeBinding Light=#666666, Dark=#999999}" />
+                    </VerticalStackLayout>
+
+                    <Label x:Name="isPlayingLabel" FontSize="13" Text="" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ═══ FIT & ALIGNMENT ═══ -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                    StrokeShape="RoundRectangle 12"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}"
+                    Padding="16">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="📐 Fit &amp; Alignment" FontAttributes="Bold" FontSize="16" />
+
+                    <Label x:Name="settingsLabel" FontSize="13" HorizontalOptions="Center"
+                           Text="Fit: Contain  •  Align: Center" FontAttributes="Italic"
+                           TextColor="{AppThemeBinding Light=#555, Dark=#AAA}" />
+
+                    <Label Text="Fit Mode" FontAttributes="Bold" FontSize="13" />
+                    <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                        <Button Text="Fill" Clicked="OnFitClicked" Margin="0,0,6,4" FontSize="12" Padding="10,4" />
+                        <Button Text="Contain" Clicked="OnFitClicked" Margin="0,0,6,4" FontSize="12" Padding="10,4" />
+                        <Button Text="Cover" Clicked="OnFitClicked" Margin="0,0,6,4" FontSize="12" Padding="10,4" />
+                        <Button Text="FitWidth" Clicked="OnFitClicked" Margin="0,0,6,4" FontSize="12" Padding="10,4" />
+                        <Button Text="FitHeight" Clicked="OnFitClicked" Margin="0,0,6,4" FontSize="12" Padding="10,4" />
+                        <Button Text="ScaleDown" Clicked="OnFitClicked" Margin="0,0,6,4" FontSize="12" Padding="10,4" />
+                        <Button Text="NoFit" Clicked="OnFitClicked" Margin="0,0,6,4" FontSize="12" Padding="10,4" />
+                        <Button Text="Layout" Clicked="OnFitClicked" Margin="0,0,6,4" FontSize="12" Padding="10,4" />
+                    </FlexLayout>
+
+                    <Label Text="Alignment" FontAttributes="Bold" FontSize="13" />
+                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="4" RowSpacing="4"
+                          HorizontalOptions="Center" WidthRequest="240">
+                        <Button Text="↖ TL" Grid.Row="0" Grid.Column="0" Clicked="OnAlignClicked" CommandParameter="TopLeft" FontSize="11" Padding="4" />
+                        <Button Text="↑ TC" Grid.Row="0" Grid.Column="1" Clicked="OnAlignClicked" CommandParameter="TopCenter" FontSize="11" Padding="4" />
+                        <Button Text="↗ TR" Grid.Row="0" Grid.Column="2" Clicked="OnAlignClicked" CommandParameter="TopRight" FontSize="11" Padding="4" />
+                        <Button Text="← CL" Grid.Row="1" Grid.Column="0" Clicked="OnAlignClicked" CommandParameter="CenterLeft" FontSize="11" Padding="4" />
+                        <Button Text="● C" Grid.Row="1" Grid.Column="1" Clicked="OnAlignClicked" CommandParameter="Center" FontSize="11" Padding="4" />
+                        <Button Text="→ CR" Grid.Row="1" Grid.Column="2" Clicked="OnAlignClicked" CommandParameter="CenterRight" FontSize="11" Padding="4" />
+                        <Button Text="↙ BL" Grid.Row="2" Grid.Column="0" Clicked="OnAlignClicked" CommandParameter="BottomLeft" FontSize="11" Padding="4" />
+                        <Button Text="↓ BC" Grid.Row="2" Grid.Column="1" Clicked="OnAlignClicked" CommandParameter="BottomCenter" FontSize="11" Padding="4" />
+                        <Button Text="↘ BR" Grid.Row="2" Grid.Column="2" Clicked="OnAlignClicked" CommandParameter="BottomRight" FontSize="11" Padding="4" />
+                    </Grid>
+
+                    <Label Text="Scale Factor (Fit=Layout)" FontAttributes="Bold" FontSize="13" />
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                        <Slider x:Name="scaleSlider" Minimum="0.5" Maximum="3.0" Value="1.0"
+                                ValueChanged="OnScaleChanged" />
+                        <Label x:Name="scaleLabel" Grid.Column="1" Text="1.0x" VerticalOptions="Center"
+                               FontAttributes="Bold" WidthRequest="40" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ═══ BYTE / URL LOADING ═══ -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                    StrokeShape="RoundRectangle 12"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}"
+                    Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="☁️ URL Loading" FontAttributes="Bold" FontSize="16" />
+                    <Label Text="Download and display a .riv file from a remote URL at runtime."
+                           FontSize="12" TextColor="{AppThemeBinding Light=#666, Dark=#999}" />
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                        <Entry x:Name="urlEntry" Placeholder="https://…/animation.riv"
+                               Text="https://cdn.rive.app/animations/vehicles.riv" FontSize="12" />
+                        <Button Grid.Column="1" Text="Load" Clicked="OnLoadUrlClicked"
+                                FontSize="12" Padding="12,4" />
+                    </Grid>
+                    <Label x:Name="loadStatusLabel" FontSize="12" Text=""
+                           TextColor="{AppThemeBinding Light=#666, Dark=#999}" />
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

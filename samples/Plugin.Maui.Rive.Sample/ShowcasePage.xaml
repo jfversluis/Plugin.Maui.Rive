@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:rive="clr-namespace:Plugin.Maui.Rive;assembly=Plugin.Maui.Rive"
+             x:Class="Plugin.Maui.Rive.Sample.ShowcasePage"
+             Title="Showcase">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="16">
+
+            <Label Text="Interactive Animations"
+                   FontSize="22" FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+            <Label Text="Tap on any animation to interact with it"
+                   FontSize="13" HorizontalOptions="Center" Margin="0,0,0,8"
+                   TextColor="{AppThemeBinding Light=#888888, Dark=#999999}" />
+
+            <!-- Vehicles -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}">
+                <VerticalStackLayout>
+                    <rive:RiveAnimationView
+                        ResourceName="vehicles"
+                        AutoPlay="True" Fit="Contain"
+                        HeightRequest="200" HorizontalOptions="Fill" />
+                    <VerticalStackLayout Padding="16,8,16,16" Spacing="4">
+                        <Label Text="🚗 Vehicles" FontSize="16" FontAttributes="Bold" />
+                        <Label Text="Interactive vehicle showcase with state machines"
+                               FontSize="12" TextColor="{AppThemeBinding Light=#888, Dark=#999}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Liquid Download -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}">
+                <VerticalStackLayout>
+                    <rive:RiveAnimationView
+                        ResourceName="liquid_download"
+                        AutoPlay="True" Fit="Contain"
+                        HeightRequest="160" HorizontalOptions="Fill" />
+                    <VerticalStackLayout Padding="16,8,16,16" Spacing="4">
+                        <Label Text="💧 Liquid Download" FontSize="16" FontAttributes="Bold" />
+                        <Label Text="Satisfying liquid fill download button animation"
+                               FontSize="12" TextColor="{AppThemeBinding Light=#888, Dark=#999}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Rating -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}">
+                <VerticalStackLayout>
+                    <rive:RiveAnimationView
+                        ResourceName="rating"
+                        AutoPlay="True" Fit="Contain"
+                        HeightRequest="160" HorizontalOptions="Fill" />
+                    <VerticalStackLayout Padding="16,8,16,16" Spacing="4">
+                        <Label Text="⭐ Rating" FontSize="16" FontAttributes="Bold" />
+                        <Label Text="Animated star rating with state machine inputs"
+                               FontSize="12" TextColor="{AppThemeBinding Light=#888, Dark=#999}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Little Machine -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}">
+                <VerticalStackLayout>
+                    <rive:RiveAnimationView
+                        ResourceName="little_machine"
+                        AutoPlay="True" Fit="Contain"
+                        HeightRequest="200" HorizontalOptions="Fill" />
+                    <VerticalStackLayout Padding="16,8,16,16" Spacing="4">
+                        <Label Text="⚙️ Little Machine" FontSize="16" FontAttributes="Bold" />
+                        <Label Text="Mesmerizing mechanical animation loop"
+                               FontSize="12" TextColor="{AppThemeBinding Light=#888, Dark=#999}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Rocket -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}">
+                <VerticalStackLayout>
+                    <rive:RiveAnimationView
+                        ResourceName="rocket"
+                        AutoPlay="True" Fit="Contain"
+                        HeightRequest="200" HorizontalOptions="Fill" />
+                    <VerticalStackLayout Padding="16,8,16,16" Spacing="4">
+                        <Label Text="🚀 Rocket" FontSize="16" FontAttributes="Bold" />
+                        <Label Text="Animated rocket launch sequence"
+                               FontSize="12" TextColor="{AppThemeBinding Light=#888, Dark=#999}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Skins Demo -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1A1A1A}">
+                <VerticalStackLayout>
+                    <rive:RiveAnimationView
+                        ResourceName="skins_demo"
+                        AutoPlay="True" Fit="Contain"
+                        HeightRequest="200" HorizontalOptions="Fill" />
+                    <VerticalStackLayout Padding="16,8,16,16" Spacing="4">
+                        <Label Text="🎨 Skins Demo" FontSize="16" FontAttributes="Bold" />
+                        <Label Text="Character skinning and customization"
+                               FontSize="12" TextColor="{AppThemeBinding Light=#888, Dark=#999}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -8,6 +8,20 @@
     Title="Rive for .NET MAUI">
 
     <TabBar>
+        <ShellContent Title="Teddy Login"
+            ContentTemplate="{DataTemplate pages:TeddyLoginPage}">
+            <ShellContent.Icon>
+                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.LockClosed24}"
+                                 FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
+            </ShellContent.Icon>
+        </ShellContent>
+        <ShellContent Title="Showcase"
+            ContentTemplate="{DataTemplate pages:ShowcasePage}">
+            <ShellContent.Icon>
+                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.Grid24}"
+                                 FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
+            </ShellContent.Icon>
+        </ShellContent>
         <ShellContent Title="Playback"
             ContentTemplate="{DataTemplate pages:MainPage}">
             <ShellContent.Icon>
@@ -22,31 +36,10 @@
                                  FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
             </ShellContent.Icon>
         </ShellContent>
-        <ShellContent Title="Fit &amp; Align"
-            ContentTemplate="{DataTemplate pages:FitAlignmentPage}">
+        <ShellContent Title="Developer"
+            ContentTemplate="{DataTemplate pages:DeveloperToolsPage}">
             <ShellContent.Icon>
-                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.ScaleFit24}"
-                                 FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
-            </ShellContent.Icon>
-        </ShellContent>
-        <ShellContent Title="Introspection"
-            ContentTemplate="{DataTemplate pages:IntrospectionPage}">
-            <ShellContent.Icon>
-                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.Search24}"
-                                 FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
-            </ShellContent.Icon>
-        </ShellContent>
-        <ShellContent Title="Teddy Login"
-            ContentTemplate="{DataTemplate pages:TeddyLoginPage}">
-            <ShellContent.Icon>
-                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.LockClosed24}"
-                                 FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
-            </ShellContent.Icon>
-        </ShellContent>
-        <ShellContent Title="Byte Loading"
-            ContentTemplate="{DataTemplate pages:ByteLoadingPage}">
-            <ShellContent.Icon>
-                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.CloudArrowDown24}"
+                <FontImageSource Glyph="{x:Static icons:FluentIconsRegular.Wrench24}"
                                  FontFamily="{x:Static icons:FluentIcons.FontFamily}" />
             </ShellContent.Icon>
         </ShellContent>
